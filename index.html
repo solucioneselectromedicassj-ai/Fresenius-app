@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FreDx — Diagnóstico Fresenius</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231565C0'/%3E%3Crect x='13' y='5' width='6' height='22' rx='3' fill='white'/%3E%3Crect x='5' y='13' width='22' height='6' rx='3' fill='white'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#F0F4F8;--surface:#FFFFFF;--s2:#F8FAFC;--s3:#EEF2F7;
+  --text:#1A202C;--t2:#4A5568;--t3:#94A3B8;
+  --border:#E2E8F0;--border2:#CBD5E1;
+  --accent:#1565C0;--accent-l:#EFF6FF;--accent-t:#1D4ED8;
+  --ok:#059669;--ok-l:#ECFDF5;--warn:#D97706;--warn-l:#FFFBEB;--err:#DC2626;--err-l:#FEF2F2;
+  --radius:10px;--sh:0 1px 4px rgba(0,0,0,.08);
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#0F172A;--surface:#1E293B;--s2:#253347;--s3:#2D3F55;
+    --text:#F1F5F9;--t2:#94A3B8;--t3:#64748B;
+    --border:#334155;--border2:#475569;
+    --accent:#3B82F6;--accent-l:#1E3A5F;--accent-t:#60A5FA;
+    --ok:#34D399;--ok-l:#064E3B;--warn:#FBBF24;--warn-l:#451A03;--err:#F87171;--err-l:#450A0A;
+    --sh:0 1px 4px rgba(0,0,0,.4);
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;display:flex;flex-direction:column;font-size:15px}
+
+/* ── HEADER ── */
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;position:sticky;top:0;z-index:50}
+.logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:17px;color:var(--accent);letter-spacing:-.3px;flex-shrink:0}
+.logo svg{width:28px;height:28px}
+.logo span{color:var(--text)}
+.model-sel{flex:1;min-width:130px;font-size:13px;padding:5px 8px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--s2);color:var(--text);cursor:pointer}
+.api-toggle{display:flex;border:1px solid var(--border2);border-radius:var(--radius);overflow:hidden;flex-shrink:0}
+.api-btn{padding:5px 10px;font-size:12px;font-weight:600;background:transparent;border:none;color:var(--t2);cursor:pointer;transition:all .15s}
+.api-btn.active{background:var(--accent);color:#fff}
+.icon-btn{width:34px;height:34px;border:1px solid var(--border2);border-radius:var(--radius);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--t2);flex-shrink:0}
+.icon-btn:hover{background:var(--s3);color:var(--text)}
+
+/* ── SETTINGS ── */
+.settings-panel{background:var(--s2);border-bottom:1px solid var(--border);padding:14px;display:none;flex-direction:column;gap:10px}
+.settings-panel.open{display:flex}
+.settings-row{display:flex;flex-direction:column;gap:4px}
+.settings-row label{font-size:12px;color:var(--t2);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.settings-row input{padding:8px 10px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--surface);color:var(--text);font-size:13px;font-family:monospace}
+.settings-row input::placeholder{color:var(--t3)}
+.settings-row input:focus{outline:none;border-color:var(--accent)}
+.settings-note{font-size:11px;color:var(--t3);line-height:1.5}
+.btn-save{align-self:flex-start;padding:6px 16px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:13px;font-weight:600;cursor:pointer}
+.btn-save:hover{opacity:.88}
+
+/* ── TABS ── */
+.tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);padding:0 14px}
+.tab{padding:11px 16px;font-size:13px;font-weight:600;color:var(--t2);border:none;background:transparent;border-bottom:2px solid transparent;cursor:pointer;transition:all .15s;white-space:nowrap}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* ── CHAT ── */
+.chat-view{flex:1;display:flex;flex-direction:column;min-height:0}
+.db-view{display:none;flex:1;overflow-y:auto;padding:14px}
+.msgs{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.msg-wrap{display:flex;flex-direction:column}
+.msg-wrap.user{align-items:flex-end}
+.msg-wrap.ai{align-items:flex-start}
+.msg-meta{font-size:11px;color:var(--t3);margin-bottom:3px;padding:0 4px}
+.bubble{max-width:88%;padding:9px 13px;border-radius:14px;line-height:1.6;font-size:14px}
+.bubble.user{background:var(--accent);color:#fff;border-radius:14px 14px 4px 14px}
+.bubble.ai{background:var(--surface);border:1px solid var(--border);border-radius:14px 14px 14px 4px;color:var(--text)}
+.bubble.sys{background:transparent;border:none;color:var(--t3);font-size:12px;text-align:center;max-width:100%}
+.bubble strong{font-weight:600}
+.bubble ul{padding-left:16px;margin-top:4px}
+.bubble li{margin-bottom:2px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;padding:8px 14px 0}
+.chip{font-size:12px;padding:5px 10px;border:1px solid var(--border2);border-radius:20px;background:var(--surface);color:var(--t2);cursor:pointer;white-space:nowrap;transition:all .15s;user-select:none}
+.chip:hover{border-color:var(--accent);color:var(--accent-t);background:var(--accent-l)}
+.input-row{display:flex;gap:8px;padding:10px 14px 14px;border-top:1px solid var(--border);background:var(--surface)}
+textarea{flex:1;font-size:14px;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--s2);color:var(--text);resize:none;min-height:40px;max-height:120px;font-family:inherit;line-height:1.4;transition:border .15s}
+textarea::placeholder{color:var(--t3)}
+textarea:focus{outline:none;border-color:var(--accent);background:var(--surface)}
+.send-btn{padding:9px 16px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);cursor:pointer;font-size:14px;font-weight:600;align-self:flex-end;white-space:nowrap;transition:opacity .15s}
+.send-btn:disabled{opacity:.45;cursor:not-allowed}
+.send-btn:hover:not(:disabled){opacity:.88}
+.typing-dots{display:flex;gap:4px;align-items:center;padding:2px 0}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--t3);animation:blink 1.2s ease-in-out infinite}
+.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}
+
+/* ── DB ── */
+.db-search-row{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.db-search{flex:1;min-width:180px;padding:9px 12px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--surface);color:var(--text);font-size:14px}
+.db-search:focus{outline:none;border-color:var(--accent)}
+.db-cat-sel{padding:9px 10px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--surface);color:var(--text);font-size:13px;cursor:pointer}
+.fault-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden;box-shadow:var(--sh);transition:box-shadow .15s}
+.fault-card:hover{box-shadow:0 3px 12px rgba(0,0,0,.12)}
+.fault-header{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;user-select:none}
+.fault-cat-badge{font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;white-space:nowrap}
+.cat-cond{background:var(--accent-l);color:var(--accent-t)}
+.cat-pres{background:var(--err-l);color:var(--err)}
+.cat-temp{background:var(--warn-l);color:var(--warn)}
+.cat-alarm{background:#FDF4FF;color:#7C3AED}
+@media(prefers-color-scheme:dark){.cat-alarm{background:#2E1065;color:#C4B5FD}}
+.cat-mec{background:var(--s3);color:var(--t2)}
+.cat-uf{background:var(--ok-l);color:var(--ok)}
+.fault-title{font-size:14px;font-weight:600;flex:1}
+.fault-models{font-size:11px;color:var(--t3)}
+.chevron{font-size:16px;color:var(--t3);transition:transform .2s}
+.fault-card.open .chevron{transform:rotate(180deg)}
+.fault-body{display:none;padding:0 14px 14px;border-top:1px solid var(--border);font-size:13px;line-height:1.65}
+.fault-card.open .fault-body{display:block}
+.fault-section{margin-top:10px}
+.fault-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--t3);margin-bottom:6px}
+.fault-section ul{padding-left:16px}
+.fault-section li{margin-bottom:3px;color:var(--t2)}
+.fault-section li strong{color:var(--text);font-weight:600}
+.valores-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:2px}
+.valor-item{background:var(--s2);border-radius:8px;padding:6px 10px;border:1px solid var(--border)}
+.valor-label{font-size:11px;color:var(--t3)}
+.valor-val{font-size:13px;font-weight:600;color:var(--accent-t)}
+.fault-ask-btn{margin-top:12px;padding:7px 14px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s}
+.fault-ask-btn:hover{opacity:.85}
+.no-results{text-align:center;color:var(--t3);padding:40px 20px;font-size:14px}
+.urgencia-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;text-transform:uppercase}
+.urg-alta{background:var(--err-l);color:var(--err)}
+.urg-media{background:var(--warn-l);color:var(--warn)}
+.urg-baja{background:var(--ok-l);color:var(--ok)}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">
+    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="32" height="32" rx="8" fill="#1565C0"/>
+      <rect x="13" y="5" width="6" height="22" rx="3" fill="white"/>
+      <rect x="5" y="13" width="22" height="6" rx="3" fill="white"/>
+    </svg>
+    Fre<span>Dx</span>
+  </div>
+  <select class="model-sel" id="modelSel">
+    <option>Fresenius 4008S</option>
+    <option>Fresenius 4008H</option>
+    <option>Fresenius 5008</option>
+    <option>Fresenius 5008S</option>
+    <option>Fresenius 5008S AV</option>
+    <option>Dialog+ B.Braun</option>
+    <option>Otra / No especificada</option>
+  </select>
+  <div class="api-toggle" title="Motor de IA activo">
+    <button class="api-btn active" id="btnClaude" onclick="setAPI('claude')">Claude</button>
+    <button class="api-btn" id="btnGemini" onclick="setAPI('gemini')">Gemini</button>
+  </div>
+  <button class="icon-btn" onclick="toggleSettings()" title="Configuración API">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path d="M12 15a3 3 0 100-6 3 3 0 000 6z"/>
+      <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+    </svg>
+  </button>
+</div>
+
+<!-- SETTINGS -->
+<div class="settings-panel" id="settingsPanel">
+  <div class="settings-row">
+    <label>API Key — Claude (Anthropic)</label>
+    <input type="password" id="claudeKey" placeholder="sk-ant-..." autocomplete="off">
+  </div>
+  <div class="settings-row">
+    <label>API Key — Gemini (Google)</label>
+    <input type="password" id="geminiKey" placeholder="AIza..." autocomplete="off">
+  </div>
+  <p class="settings-note">Las claves se guardan solo en tu navegador (localStorage). Sin clave configurada el chat no funciona, pero la Base de Fallas sí.</p>
+  <button class="btn-save" onclick="saveKeys()">Guardar claves</button>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab active" id="tabChat" onclick="switchTab('chat')">💬 Chat IA</button>
+  <button class="tab" id="tabDB" onclick="switchTab('db')">📋 Base de fallas</button>
+</div>
+
+<!-- CHAT VIEW -->
+<div class="chat-view" id="chatView">
+  <div class="msgs" id="msgs">
+    <div class="msg-wrap ai"><div class="bubble sys">Seleccioná el modelo y describí el error</div></div>
+    <div class="msg-wrap ai">
+      <div class="msg-meta">FreDx IA</div>
+      <div class="bubble ai">Hola. Soy tu asistente técnico para hemodiálisis. Describime el síntoma o código de alarma y te guío en el diagnóstico.<br><br>Si tenés valores medidos (conductividad, presiones, flujos) dámelos y los analizo en el momento.</div>
+    </div>
+  </div>
+  <div class="chips">
+    <span class="chip" onclick="insertChip('Conductividad: ___ mS/cm')">📊 Conductividad</span>
+    <span class="chip" onclick="insertChip('Presión venosa: ___ / arterial: ___ mmHg')">💉 Presiones</span>
+    <span class="chip" onclick="insertChip('Flujo sangre: ___ / dializante: ___ mL/min')">🔄 Flujos</span>
+    <span class="chip" onclick="insertChip('Temperatura: ___ °C')">🌡 Temperatura</span>
+    <span class="chip" onclick="insertChip('Presión degassing: ___ mmHg')">🔧 Degassing</span>
+    <span class="chip" onclick="insertChip('ADC-digits: ___ / Steps bomba: ___')">🔢 ADC/Steps</span>
+    <span class="chip" onclick="insertChip('Código de alarma: ')">⚠️ Alarma</span>
+    <span class="chip" onclick="insertChip('TMP: ___ mmHg')">🩸 TMP</span>
+  </div>
+  <div class="input-row">
+    <textarea id="inp" placeholder="Ej: conductividad alta, no baja de 14.5 mS/cm..." rows="1"
+      onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+    <button class="send-btn" id="sendbtn" onclick="sendMsg()">Enviar ↗</button>
+  </div>
+</div>
+
+<!-- DB VIEW -->
+<div class="db-view" id="dbView">
+  <div class="db-search-row">
+    <input class="db-search" id="dbSearch" placeholder="Buscar falla, síntoma o código..." oninput="renderDB()">
+    <select class="db-cat-sel" id="dbCat" onchange="renderDB()">
+      <option value="">Todas las categorías</option>
+      <option value="Conductividad">Conductividad</option>
+      <option value="Presiones">Presiones</option>
+      <option value="Temperatura">Temperatura</option>
+      <option value="Alarma">Alarmas</option>
+      <option value="Mecánico">Mecánico</option>
+      <option value="UF/Balanza">UF / Balanza</option>
+    </select>
+  </div>
+  <div id="dbList"></div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════
+// BASE DE FALLAS OFFLINE
+// ════════════════════════════════════════════════════
+const FAULTS = [
+  {
+    id:1, cat:"Conductividad", urgencia:"media",
+    titulo:"Conductividad alta, no baja del rango",
+    modelos:["4008S","4008H","5008","5008S"],
+    sintomas:"Conductividad por encima del target (ej: 14.5 cuando debería ser 13.8). No responde a ajustes.",
+    causas:[
+      "Célula de conductividad calcificada o sucia",
+      "Sensor de temperatura PT1000 derivado (la corrección térmica falla)",
+      "Bomba de concentrado mal calibrada (entrega más de lo debido)",
+      "Cartucho de bicarbonato incorrecto o de otra concentración",
+      "Mezcla mal configurada en software (ratio erróneo)"
+    ],
+    pasos:[
+      "<strong>Descalcificar la célula</strong> con ácido cítrico al 2-3% o vinagre diluido, 15-20 min de contacto",
+      "<strong>Comparar con conductímetro externo calibrado</strong> en el bypass — si difieren >0.2 mS/cm, recalibrar",
+      "<strong>Verificar temperatura</strong> con termómetro externo vs la mostrada en pantalla",
+      "<strong>Chequear el ratio de mezcla</strong> en menú de servicio y comparar pasos de bomba con los esperados según el concentrado"
+    ],
+    valores:[
+      {label:"Conductividad normal",val:"13.0–15.5 mS/cm"},
+      {label:"ADC-digits cond.",val:"0050–0200 aprox"},
+      {label:"Temp. normal",val:"35–38 °C"},
+      {label:"Steps bicarb 4008S",val:"0150–0400"}
+    ],
+    keywords:"conductividad alta mS/cm célula calcio temperatura"
+  },
+  {
+    id:2, cat:"Conductividad", urgencia:"media",
+    titulo:"Conductividad baja, no sube",
+    modelos:["4008S","4008H","5008","5008S"],
+    sintomas:"Conductividad por debajo del target programado. Alarma de conductividad baja.",
+    causas:[
+      "Concentrado de ácido vacío o línea obstruida",
+      "Filtro de concentrado tapado",
+      "Bomba de concentrado no aspira (cavitación, válvula, sello)",
+      "Cartucho de bicarbonato agotado o mal colocado",
+      "Sensor de conductividad sucio (lecturas bajas falsas)"
+    ],
+    pasos:[
+      "<strong>Verificar nivel de concentrado</strong> y que la línea esté sumergida correctamente",
+      "<strong>Desconectar la línea de concentrado</strong> y verificar succión manual de la bomba",
+      "<strong>Revisar filtro pre-bomba</strong> de concentrado — limpiar o reemplazar",
+      "<strong>Probar con concentrado nuevo</strong> para descartar problema de producto",
+      "<strong>Limpiar la célula de conductividad</strong> y recalibrar"
+    ],
+    valores:[
+      {label:"Conductividad normal",val:"13.0–15.5 mS/cm"},
+      {label:"Steps concentrado",val:"0080–0250"},
+      {label:"Presión degassing",val:"600–760 mmHg"}
+    ],
+    keywords:"conductividad baja concentrado bomba filtro cartucho"
+  },
+  {
+    id:3, cat:"Conductividad", urgencia:"baja",
+    titulo:"Conductividad fluctuante / inestable",
+    modelos:["4008S","4008H","5008","5008S"],
+    sintomas:"Conductividad sube y baja continuamente, alarmas intermitentes.",
+    causas:[
+      "Degassing deficiente (burbujas en la mezcla)",
+      "Bomba de concentrado con válvula desgastada (entrega irregular)",
+      "Micro-fugas en circuito hidráulico de mezcla",
+      "Célula de conductividad con depósitos parciales",
+      "Sensor de temperatura inestable"
+    ],
+    pasos:[
+      "<strong>Verificar presión y flujo de degassing</strong> — si está fuera de rango es la causa más probable",
+      "<strong>Chequear el filtro pre-degassing</strong> y el filtro de membrana del desgasificador",
+      "<strong>Hacer servicio de bomba de concentrado</strong> (limpiar/cambiar válvulas check)",
+      "<strong>Inspeccionar uniones</strong> del circuito de mezcla buscando micro-fugas"
+    ],
+    valores:[
+      {label:"Presión degassing",val:"600–760 mmHg"},
+      {label:"Fluctuación normal",val:"±0.1 mS/cm"}
+    ],
+    keywords:"conductividad fluctuante inestable oscila degassing burbujas"
+  },
+  {
+    id:4, cat:"Presiones", urgencia:"alta",
+    titulo:"Presión venosa alta — alarma",
+    modelos:["4008S","4008H","5008","5008S","Dialog+"],
+    sintomas:"Alarma de presión venosa alta. La máquina para la bomba de sangre. PV sube progresivamente.",
+    causas:[
+      "Coágulo en el dializador o línea venosa",
+      "Vena del paciente colapsada o mal posicionada",
+      "Trampa de aire venosa llena de coágulos",
+      "Doblez en línea venosa o porta-aguja mal colocado",
+      "Aguja venosa fuera de posición o calibre inadecuado"
+    ],
+    pasos:[
+      "<strong>Reducir el flujo de sangre</strong> y observar si la presión baja — si baja, es problema de acceso vascular",
+      "<strong>Revisar visualmente toda la línea venosa</strong> buscando dobleces, pinzas cerradas o coágulos visibles",
+      "<strong>Revisar la trampa de aire</strong> — si hay coágulos, reemplazar trampa",
+      "<strong>Evaluar el dializador</strong> con presión arterial y venosa — si la TMP sube junto con PV, el dializador puede estar coagulado",
+      "<strong>Verificar acceso vascular</strong> con el personal de enfermería"
+    ],
+    valores:[
+      {label:"PV normal",val:"50–250 mmHg"},
+      {label:"PA normal",val:"-50 a -250 mmHg"},
+      {label:"TMP normal",val:"0–350 mmHg"},
+      {label:"Flujo sangre",val:"200–500 mL/min"}
+    ],
+    keywords:"presión venosa alta PV alarma coágulo dializador trampa"
+  },
+  {
+    id:5, cat:"Presiones", urgencia:"media",
+    titulo:"Presión arterial muy negativa",
+    modelos:["4008S","4008H","5008","5008S","Dialog+"],
+    sintomas:"Presión arterial cae por debajo de -250/-300 mmHg. Alarma. Posible colapso de línea.",
+    causas:[
+      "Flujo de sangre demasiado alto para el acceso vascular",
+      "Aguja arterial mal posicionada o fuera del vaso",
+      "Doblez en línea arterial",
+      "Fístula con flujo insuficiente (estenosis)",
+      "Catéter con lumen ocluido parcialmente"
+    ],
+    pasos:[
+      "<strong>Reducir flujo de sangre</strong> de a 50 mL/min hasta que la PA se estabilice",
+      "<strong>Revisar la línea arterial</strong> desde la aguja hasta la bomba buscando doblez o pinza",
+      "<strong>Invertir líneas</strong> temporalmente para evaluar si el acceso es el problema",
+      "<strong>Evaluar con el médico</strong> si la fístula o catéter requiere intervención"
+    ],
+    valores:[
+      {label:"PA normal",val:"-50 a -250 mmHg"},
+      {label:"Límite alarma",val:"< -300 mmHg (ajustable)"}
+    ],
+    keywords:"presión arterial negativa PA alarma flujo fístula catéter doblez"
+  },
+  {
+    id:6, cat:"Presiones", urgencia:"media",
+    titulo:"TMP alta — presión transmembrana elevada",
+    modelos:["4008S","4008H","5008","5008S"],
+    sintomas:"TMP sube progresivamente durante el tratamiento. Puede llegar a la alarma.",
+    causas:[
+      "Dializador coagulándose (reducción de superficie de membrana)",
+      "UF rate demasiado alto para el tipo de membrana",
+      "Flujo de dializante bajo",
+      "Presiones de acceso vascular cambiadas (PA muy negativa)"
+    ],
+    pasos:[
+      "<strong>Revisar UF rate</strong> — reducir temporalmente y ver si TMP baja",
+      "<strong>Verificar flujo de dializante</strong> — si está bajo, corregir",
+      "<strong>Evaluar el dializador</strong> — si la TMP sigue subiendo con todo normal, probablemente hay coagulación",
+      "<strong>Enjuague salino</strong> del dializador si el protocolo lo permite"
+    ],
+    valores:[
+      {label:"TMP normal",val:"0–350 mmHg"},
+      {label:"TMP alarma",val:"> 400 mmHg"},
+      {label:"Flujo dializante",val:"500–800 mL/min"},
+      {label:"UF rate",val:"Según prescripción"}
+    ],
+    keywords:"TMP transmembrana alta dializador coagulación UF"
+  },
+  {
+    id:7, cat:"Alarma", urgencia:"alta",
+    titulo:"Alarma de aire — detector de burbujas",
+    modelos:["4008S","4008H","5008","5008S","Dialog+"],
+    sintomas:"Alarma de detección de aire en línea venosa. La bomba para automáticamente.",
+    causas:[
+      "Detector ultrasónico sucio o con gel seco",
+      "Micro-burbujas por mal cebado de líneas",
+      "Trampa de aire con nivel bajo",
+      "Conexión floja en línea venosa (ingresa aire)",
+      "Degassing deficiente (el líquido de diálisis libera gas)"
+    ],
+    pasos:[
+      "<strong>Limpiar el detector de burbujas</strong> con gel ecográfico fresco y reposicionar la línea",
+      "<strong>Revisar el nivel en la trampa de aire</strong> — ajustar al 2/3 de llenado",
+      "<strong>Verificar todas las conexiones venosas</strong> buscando fugas de aire",
+      "<strong>Re-cebar las líneas</strong> si hubo interrupción del tratamiento",
+      "<strong>Verificar degassing</strong> si la alarma es recurrente sin causa aparente"
+    ],
+    valores:[
+      {label:"Presión degassing",val:"600–760 mmHg"},
+      {label:"Nivel trampa",val:"2/3 llena"}
+    ],
+    keywords:"alarma aire burbujas detector ultrasónico trampa venosa"
+  },
+  {
+    id:8, cat:"Alarma", urgencia:"alta",
+    titulo:"Blood leak — alarma de hemoglobina en dializante",
+    modelos:["4008S","4008H","5008","5008S"],
+    sintomas:"Alarma de fuga de sangre. El dializante se tiñe de rosa o rojo. La máquina para.",
+    causas:[
+      "Ruptura de membrana del dializador",
+      "Detector de hemoglobina sucio o mal calibrado",
+      "Alarma falsa por burbujas en el circuito de dializante",
+      "Detergente residual de la desinfección (tinte óptico)"
+    ],
+    pasos:[
+      "<strong>Detener tratamiento de inmediato</strong> y no retornar sangre hasta confirmar",
+      "<strong>Verificar visualmente el dializante</strong> en el recipiente de drenaje — rosa = real, transparente = falsa alarma",
+      "<strong>Hacer test de confirmación</strong>: tomar muestra de dializante y centrifugar",
+      "<strong>Si es real</strong>: reemplazar dializador, no retornar sangre del circuito afectado",
+      "<strong>Si es falsa alarma</strong>: limpiar el detector con agua destilada, enjuagar el circuito de dializante"
+    ],
+    valores:[
+      {label:"Sensibilidad detector",val:"Hb > 0.03 g/dL"},
+      {label:"Acción",val:"PARAR — verificar antes de continuar"}
+    ],
+    keywords:"blood leak alarma hemoglobina sangre dializante ruptura membrana"
+  },
+  {
+    id:9, cat:"Temperatura", urgencia:"media",
+    titulo:"Temperatura fuera de rango — alta o baja",
+    modelos:["4008S","4008H","5008","5008S"],
+    sintomas:"Alarma de temperatura. Puede ser Temp alta (>38°C) o baja (<35°C). Fluctuante o fija.",
+    causas:[
+      "Sensor de temperatura PT1000 defectuoso o derivado",
+      "Calentador eléctrico con resistencia quemada o control defectuoso",
+      "Escala de calcio en el calentador (baja eficiencia)",
+      "Flujo de dializante muy alto para la capacidad de calentamiento",
+      "Válvula de temperatura mal calibrada"
+    ],
+    pasos:[
+      "<strong>Comparar la temperatura mostrada</strong> con termómetro externo de referencia en el bypass",
+      "<strong>Si difieren >0.5°C</strong>: el PT1000 está derivado — reemplazar o recalibrar",
+      "<strong>Si la temp es correcta pero fuera de rango</strong>: revisar el calentador (resistencia, fusible térmico)",
+      "<strong>Descalcificar el calentador</strong> si hay incrustaciones visibles",
+      "<strong>Verificar el flujo de dializante</strong> — si es muy alto, la temperatura no alcanza el set-point"
+    ],
+    valores:[
+      {label:"Temperatura normal",val:"35–38 °C"},
+      {label:"Set-point típico",val:"37 °C"},
+      {label:"Tolerancia sensor",val:"±0.5 °C"}
+    ],
+    keywords:"temperatura fuera rango PT1000 calentador sensor térmico"
+  },
+  {
+    id:10, cat:"Mecánico", urgencia:"media",
+    titulo:"Degassing fuera de rango — presión de vacío alta o baja",
+    modelos:["4008S","4008H","5008","5008S"],
+    sintomas:"Presión de degassing fuera del rango (600-760 mmHg). Conductividad fluctuante asociada. Burbujas en circuito de dializante.",
+    causas:[
+      "Bomba de vacío débil o con rodamiento gastado",
+      "Filtro pre-degassing saturado u obstruido",
+      "Fugas en el circuito de vacío (racores, mangueras)",
+      "Membrana del desgasificador perforada o colmatada",
+      "Válvula de vacío defectuosa"
+    ],
+    pasos:[
+      "<strong>Limpiar o reemplazar el filtro pre-degassing</strong> — es la causa más frecuente",
+      "<strong>Verificar las mangueras y racores</strong> del circuito de vacío con agua jabonosa buscando burbujas",
+      "<strong>Medir la presión de vacío</strong> directamente con manómetro de referencia",
+      "<strong>Revisar la bomba de vacío</strong> — escuchar ruido de rodamiento, verificar correa",
+      "<strong>Testear la membrana del desgasificador</strong> con presión diferencial"
+    ],
+    valores:[
+      {label:"Presión degassing",val:"600–760 mmHg"},
+      {label:"Flujo mín. degassing",val:"Ver manual según modelo"}
+    ],
+    keywords:"degassing vacío presión membrana bomba filtro burbujas conductividad"
+  },
+  {
+    id:11, cat:"Mecánico", urgencia:"media",
+    titulo:"Bomba peristáltica de sangre — ruido, falla o flujo incorrecto",
+    modelos:["4008S","4008H","5008","5008S","Dialog+"],
+    sintomas:"Ruido en bomba de sangre, flujo real diferente al mostrado, vibración excesiva.",
+    causas:[
+      "Rodillos de la bomba desgastados o sucios",
+      "Segmento de línea de bomba mal colocado",
+      "Calibración de flujo incorrecta (pasos/revolución)",
+      "Rodamiento del motor gastado",
+      "Oclusión incorrecta de la bomba"
+    ],
+    pasos:[
+      "<strong>Verificar la oclusión de la bomba</strong> — debe ser mínima para evitar hemólisis sin perder flujo",
+      "<strong>Limpiar los rodillos y el track de la bomba</strong> con paño húmedo",
+      "<strong>Calibrar el flujo</strong> con medición volumétrica (medir 100 mL en 1 minuto)",
+      "<strong>Revisar el rodamiento del motor</strong> si hay vibración o ruido metálico",
+      "<strong>Reemplazar rodillos</strong> si están aplanados o irregulares"
+    ],
+    valores:[
+      {label:"Flujo sangre",val:"200–500 mL/min"},
+      {label:"Error tolerable",val:"±5% del setpoint"}
+    ],
+    keywords:"bomba peristáltica sangre ruido flujo rodillos calibración hemólisis"
+  },
+  {
+    id:12, cat:"Mecánico", urgencia:"baja",
+    titulo:"Error en ciclo de enjuague o desinfección",
+    modelos:["4008S","4008H","5008","5008S"],
+    sintomas:"La máquina no completa el ciclo de rinse o desinfección. Error en pantalla durante el proceso.",
+    causas:[
+      "Conductividad post-enjuague fuera de rango (residuos de desinfectante)",
+      "Sensor de conductividad sucia que da lectura errónea",
+      "Tiempo de enjuague insuficiente",
+      "Fallo de temperatura durante desinfección térmica",
+      "Válvula de desinfectante no abre/cierra correctamente"
+    ],
+    pasos:[
+      "<strong>Dejar correr un ciclo de enjuague adicional</strong> con agua tratada",
+      "<strong>Medir conductividad manualmente</strong> a la salida del monitor durante el enjuague",
+      "<strong>Verificar que no queden residuos</strong> de desinfectante en líneas de concentrado",
+      "<strong>En desinfección térmica</strong>: verificar que la temperatura llegue al set-point",
+      "<strong>Revisar válvulas del circuito</strong> de desinfectante si el error persiste"
+    ],
+    valores:[
+      {label:"Cond. post-enjuague",val:"≤ 0.1 mS/cm sobre agua de red"},
+      {label:"Temp. desinfección",val:"85–95 °C (según protocolo)"}
+    ],
+    keywords:"enjuague rinse desinfección ciclo error conductividad residuo"
+  },
+  {
+    id:13, cat:"UF/Balanza", urgencia:"alta",
+    titulo:"Alarma de UF — ultrafiltración descontrolada",
+    modelos:["4008S","5008","5008S"],
+    sintomas:"Alarma de UF. El sistema no puede mantener el balance. Puede ser por exceso o déficit de extracción.",
+    causas:[
+      "Balanza hidráulica descalibrada",
+      "Obstrucción en línea de ultrafiltración",
+      "Membrana del dializador perforada (UF excesiva)",
+      "Fallo en el sensor de presión transmembrana",
+      "Error de software en el control de balance"
+    ],
+    pasos:[
+      "<strong>Verificar TMP actual</strong> y comparar con histórico del tratamiento",
+      "<strong>Reducir el UF rate</strong> al mínimo y observar si el sistema se estabiliza",
+      "<strong>Chequear las presiones del circuito hidráulico</strong> en el menú de diagnóstico",
+      "<strong>Hacer recalibración de la balanza</strong> según procedimiento del manual de servicio",
+      "<strong>Evaluar el dializador</strong> si la UF real supera ampliamente la programada"
+    ],
+    valores:[
+      {label:"TMP normal",val:"0–350 mmHg"},
+      {label:"UF rate",val:"Según prescripción"},
+      {label:"Error tolerable",val:"±100 mL por tratamiento"}
+    ],
+    keywords:"UF ultrafiltración alarma balanza balance hidráulico dializador"
+  },
+  {
+    id:14, cat:"Alarma", urgencia:"media",
+    titulo:"Pérdida de cebado — líneas de sangre no cebadas",
+    modelos:["4008S","4008H","5008","5008S","Dialog+"],
+    sintomas:"Alarma de detector de sangre en posición incorrecta. Línea no llena correctamente al cebar.",
+    causas:[
+      "Detector de nivel o óptico sucio",
+      "Líneas con micro-burbujas que interrumpen el cebado",
+      "Pinza de línea no completamente abierta",
+      "Bomba de sangre con flujo demasiado alto durante el cebado",
+      "Trampa de aire mal posicionada"
+    ],
+    pasos:[
+      "<strong>Reiniciar el proceso de cebado</strong> con flujo bajo (80-100 mL/min)",
+      "<strong>Limpiar el detector óptico</strong> de posición de sangre",
+      "<strong>Verificar que todas las pinzas estén abiertas</strong> correctamente",
+      "<strong>Golpear suavemente la trampa de aire</strong> para liberar micro-burbujas",
+      "<strong>Revisar la línea completa</strong> buscando puntos de retención de aire"
+    ],
+    valores:[
+      {label:"Flujo cebado",val:"80–150 mL/min"},
+      {label:"Volumen cebado",val:"Según línea (aprox 200 mL)"}
+    ],
+    keywords:"cebado cebar línea sangre burbujas detector trampa pinza"
+  },
+  {
+    id:15, cat:"Mecánico", urgencia:"baja",
+    titulo:"Error de sensor de flujo de dializante",
+    modelos:["4008S","4008H","5008","5008S"],
+    sintomas:"Alarma de flujo de dializante. El flujo mostrado no coincide con el real o fluctúa.",
+    causas:[
+      "Sensor de flujo ultrasónico sucio o con incrustaciones",
+      "Bomba de dializante con flujo reducido",
+      "Fugas en el circuito hidráulico",
+      "Calibración de flujo incorrecta"
+    ],
+    pasos:[
+      "<strong>Limpiar el sensor de flujo</strong> con ácido cítrico diluido",
+      "<strong>Medir el flujo real</strong> de manera volumétrica a la salida",
+      "<strong>Comparar con el valor mostrado</strong> en pantalla",
+      "<strong>Recalibrar el sensor</strong> desde el menú de servicio si hay diferencia >10%"
+    ],
+    valores:[
+      {label:"Flujo dializante",val:"300–800 mL/min"},
+      {label:"Error tolerable",val:"±10%"}
+    ],
+    keywords:"flujo dializante sensor error bomba calibración"
+  },
+  {
+    id:16, cat:"Mecánico", urgencia:"baja",
+    titulo:"Pantalla negra / máquina no enciende",
+    modelos:["4008S","4008H","5008","5008S"],
+    sintomas:"La máquina no enciende, pantalla negra, sin respuesta al interruptor principal.",
+    causas:[
+      "Fusibles quemados (principal o de circuito de control)",
+      "Fuente de alimentación defectuosa",
+      "Cable de alimentación o enchufe con mal contacto",
+      "Backlight de pantalla quemado (enciende pero no se ve)",
+      "Placa de control con fallo de arranque"
+    ],
+    pasos:[
+      "<strong>Verificar la alimentación eléctrica</strong> con tester — tensión en el enchufe y en el interruptor",
+      "<strong>Revisar todos los fusibles</strong> de la máquina (ver diagrama en tapa de fusibles)",
+      "<strong>Probar con linterna</strong> en la pantalla — si se ve imagen tenue, es el backlight",
+      "<strong>Verificar la fuente de alimentación</strong> con tester en sus salidas (5V, 12V, 24V según modelo)",
+      "<strong>Revisar el log de errores</strong> si la máquina arranca parcialmente"
+    ],
+    valores:[
+      {label:"Tensión red",val:"220V ±10%"},
+      {label:"Frecuencia",val:"50 Hz"},
+      {label:"Consumo 4008S",val:"~600 W"}
+    ],
+    keywords:"no enciende pantalla negra fusible fuente alimentación arranque"
+  }
+];
+
+// ════════════════════════════════════════════════════
+// ESTADO
+// ════════════════════════════════════════════════════
+let activeAPI = 'claude';
+let history = [];
+let busy = false;
+
+const SYSTEM = `Sos un técnico especialista en mantenimiento y reparación de máquinas de hemodiálisis Fresenius (modelos 4008S, 4008H, 5008, 5008S, 5008S AV) y B.Braun Dialog+.
+
+Tu rol:
+1. Diagnosticar fallas a partir de síntomas, errores o códigos de alarma
+2. Pedir valores específicos cuando los necesitás (de a uno por vez)
+3. Dar pasos concretos ordenados de más a menos probable
+4. Analizar valores recibidos y decir si están dentro o fuera del rango normal
+
+Rangos normales:
+- Conductividad: 13.0–15.5 mS/cm
+- Presión arterial: -50 a -250 mmHg
+- Presión venosa: 50 a 250 mmHg
+- Flujo sangre: 200–500 mL/min
+- Flujo dializante: 300–800 mL/min
+- Temperatura: 35–38 °C
+- TMP: 0–350 mmHg
+- Presión degassing: 600–760 mmHg
+- ADC-digits conductividad: 0050–0200 aprox
+- Steps bomba bicarbonato 4008S: 0150–0400
+- Steps bomba concentrado: 0080–0250
+
+Causas frecuentes:
+- Conductividad alta: célula calcificada, sensor temperatura, bomba descalibrada, cartucho incorrecto
+- Conductividad baja: concentrado vacío, línea obstruida, bomba no aspira
+- PV alta: coágulo, vena colapsada, trampa con fibrina
+- PA muy negativa: flujo alto, acceso vascular comprometido
+- Alarma de aire: detector sucio, burbujas, trampa baja
+- Temperatura: PT1000 derivado, calentador, calcificación
+- Degassing alto: bomba vacío, filtro tapado, fugas
+
+Respondé en español rioplatense, directo y técnico. Usá **negrita** para diagnósticos y acciones clave. No des más de 4 pasos por respuesta. Si el técnico da valores, analizalos uno por uno indicando si están bien o mal y qué implica.`;
+
+// ════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════
+window.onload = () => {
+  const savedClaude = localStorage.getItem('fredx_claude_key') || '';
+  const savedGemini = localStorage.getItem('fredx_gemini_key') || '';
+  document.getElementById('claudeKey').value = savedClaude;
+  document.getElementById('geminiKey').value = savedGemini;
+  const savedAPI = localStorage.getItem('fredx_api') || 'claude';
+  setAPI(savedAPI);
+  renderDB();
+};
+
+// ════════════════════════════════════════════════════
+// SETTINGS
+// ════════════════════════════════════════════════════
+function toggleSettings() {
+  document.getElementById('settingsPanel').classList.toggle('open');
+}
+function saveKeys() {
+  localStorage.setItem('fredx_claude_key', document.getElementById('claudeKey').value.trim());
+  localStorage.setItem('fredx_gemini_key', document.getElementById('geminiKey').value.trim());
+  const p = document.getElementById('settingsPanel');
+  p.classList.remove('open');
+  addBubble('ai', 'Claves guardadas. Podés empezar a chatear.');
+}
+
+// ════════════════════════════════════════════════════
+// API TOGGLE
+// ════════════════════════════════════════════════════
+function setAPI(api) {
+  activeAPI = api;
+  localStorage.setItem('fredx_api', api);
+  document.getElementById('btnClaude').classList.toggle('active', api === 'claude');
+  document.getElementById('btnGemini').classList.toggle('active', api === 'gemini');
+}
+
+// ════════════════════════════════════════════════════
+// TABS
+// ════════════════════════════════════════════════════
+function switchTab(tab) {
+  const isChat = tab === 'chat';
+  document.getElementById('chatView').style.display = isChat ? 'flex' : 'none';
+  document.getElementById('dbView').style.display = isChat ? 'none' : 'block';
+  document.getElementById('tabChat').classList.toggle('active', isChat);
+  document.getElementById('tabDB').classList.toggle('active', !isChat);
+}
+
+// ════════════════════════════════════════════════════
+// CHAT
+// ════════════════════════════════════════════════════
+function insertChip(t) {
+  const inp = document.getElementById('inp');
+  inp.value = t;
+  inp.focus();
+  autoResize(inp);
+}
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMsg(); }
+}
+function fmtAI(txt) {
+  return txt
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n\n/g, '<br><br>')
+    .replace(/\n- /g, '<br>• ')
+    .replace(/\n/g, '<br>');
+}
+function addBubble(role, html, isTyping) {
+  const msgs = document.getElementById('msgs');
+  const wrap = document.createElement('div');
+  wrap.className = 'msg-wrap ' + role;
+  if (role === 'ai') {
+    const meta = document.createElement('div');
+    meta.className = 'msg-meta';
+    meta.textContent = activeAPI === 'claude' ? 'FreDx · Claude' : 'FreDx · Gemini';
+    wrap.appendChild(meta);
+  }
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble ' + role;
+  bubble.innerHTML = isTyping
+    ? '<div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>'
+    : html;
+  wrap.appendChild(bubble);
+  msgs.appendChild(wrap);
+  msgs.scrollTop = msgs.scrollHeight;
+  return bubble;
+}
+
+async function sendMsg() {
+  if (busy) return;
+  const inp = document.getElementById('inp');
+  const txt = inp.value.trim();
+  if (!txt) return;
+  inp.value = ''; autoResize(inp);
+  busy = true;
+  document.getElementById('sendbtn').disabled = true;
+
+  const model = document.getElementById('modelSel').value;
+  const userMsg = `[${model}] ${txt}`;
+  addBubble('user', txt);
+  history.push({ role: 'user', content: userMsg });
+
+  const typing = addBubble('ai', '', true);
+
+  try {
+    let reply = '';
+    if (activeAPI === 'claude') {
+      reply = await callClaude();
+    } else {
+      reply = await callGemini();
+    }
+    history.push({ role: 'assistant', content: reply });
+    typing.innerHTML = fmtAI(reply);
+  } catch (e) {
+    typing.innerHTML = `<span style="color:var(--err)">Error: ${e.message}</span>`;
+    history.pop();
+  }
+
+  document.getElementById('msgs').scrollTop = 99999;
+  busy = false;
+  document.getElementById('sendbtn').disabled = false;
+  document.getElementById('inp').focus();
+}
+
+async function callClaude() {
+  const key = localStorage.getItem('fredx_claude_key') || '';
+  if (!key) throw new Error('Configurá la API key de Claude en ⚙️');
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1024,
+      system: SYSTEM,
+      messages: history
+    })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `HTTP ${res.status}`);
+  }
+  const data = await res.json();
+  return data.content?.[0]?.text || 'Sin respuesta.';
+}
+
+async function callGemini() {
+  const key = localStorage.getItem('fredx_gemini_key') || '';
+  if (!key) throw new Error('Configurá la API key de Gemini en ⚙️');
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
+  const contents = history.map(m => ({
+    role: m.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: m.content }]
+  }));
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      system_instruction: { parts: [{ text: SYSTEM }] },
+      contents
+    })
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `HTTP ${res.status}`);
+  }
+  const data = await res.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || 'Sin respuesta.';
+}
+
+// ════════════════════════════════════════════════════
+// BASE DE FALLAS
+// ════════════════════════════════════════════════════
+const CAT_CLASS = {
+  'Conductividad':'cat-cond','Presiones':'cat-pres','Temperatura':'cat-temp',
+  'Alarma':'cat-alarm','Mecánico':'cat-mec','UF/Balanza':'cat-uf'
+};
+const URG_CLASS = { alta:'urg-alta', media:'urg-media', baja:'urg-baja' };
+
+function renderDB() {
+  const q = document.getElementById('dbSearch').value.toLowerCase();
+  const cat = document.getElementById('dbCat').value;
+  const list = document.getElementById('dbList');
+  const filtered = FAULTS.filter(f => {
+    if (cat && f.cat !== cat) return false;
+    if (!q) return true;
+    return (f.titulo + f.sintomas + f.keywords + f.causas.join(' ')).toLowerCase().includes(q);
+  });
+  if (!filtered.length) {
+    list.innerHTML = '<div class="no-results">Sin resultados para esa búsqueda.<br>Probá con otros términos.</div>';
+    return;
+  }
+  list.innerHTML = filtered.map(f => `
+    <div class="fault-card" id="fc${f.id}">
+      <div class="fault-header" onclick="toggleFault(${f.id})">
+        <span class="fault-cat-badge ${CAT_CLASS[f.cat]||'cat-mec'}">${f.cat}</span>
+        <span class="fault-title">${f.titulo}</span>
+        <span class="urgencia-badge ${URG_CLASS[f.urgencia]}">${f.urgencia}</span>
+        <span class="chevron">▾</span>
+      </div>
+      <div class="fault-body">
+        <div class="fault-models">Modelos: ${f.modelos.join(', ')}</div>
+        <div class="fault-section">
+          <div class="fault-section-title">Síntoma</div>
+          <p style="color:var(--t2)">${f.sintomas}</p>
+        </div>
+        <div class="fault-section">
+          <div class="fault-section-title">Causas probables</div>
+          <ul>${f.causas.map(c=>`<li>${c}</li>`).join('')}</ul>
+        </div>
+        <div class="fault-section">
+          <div class="fault-section-title">Pasos de diagnóstico</div>
+          <ul>${f.pasos.map((p,i)=>`<li><strong>${i+1}.</strong> ${p}</li>`).join('')}</ul>
+        </div>
+        <div class="fault-section">
+          <div class="fault-section-title">Valores de referencia</div>
+          <div class="valores-grid">${f.valores.map(v=>`
+            <div class="valor-item">
+              <div class="valor-label">${v.label}</div>
+              <div class="valor-val">${v.val}</div>
+            </div>`).join('')}</div>
+        </div>
+        <button class="fault-ask-btn" onclick="askAbout(${f.id})">Consultar con IA ↗</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleFault(id) {
+  document.getElementById('fc'+id).classList.toggle('open');
+}
+
+function askAbout(id) {
+  const f = FAULTS.find(x => x.id === id);
+  if (!f) return;
+  switchTab('chat');
+  const inp = document.getElementById('inp');
+  inp.value = `Tengo el problema "${f.titulo}". ¿Podés guiarme en el diagnóstico?`;
+  autoResize(inp);
+  inp.focus();
+}
+</script>
+</body>
+</html>
