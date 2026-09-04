@@ -445,7 +445,17 @@ async function sendMsg() {
     const reply=activeAPI==='claude'?await callClaude():await callGemini();
     history.push({role:'assistant',content:reply});
     typing.innerHTML=fmtAI(reply);
-  } catch(e) { typing.innerHTML=`<span style="color:var(--err)">⚠ Error: ${e.message}</span>`; history.pop(); }
+  } catch(e) {
+    const msg = e.message||'';
+    let html = `<span style="color:var(--err)">⚠ ${msg}</span>`;
+    if(msg.includes('credit')||msg.includes('balance')||msg.includes('billing'))
+      html=`<span style="color:var(--err)">⚠ <strong>Saldo insuficiente en Claude.</strong><br>Cargá créditos en <a href="https://console.anthropic.com/settings/billing" target="_blank" style="color:var(--accent)">console.anthropic.com/billing</a></span>`;
+    else if(msg.includes('API key')||msg.includes('401')||msg.includes('403'))
+      html=`<span style="color:var(--err)">⚠ <strong>API key inválida.</strong> Verificá la clave en ⚙️.</span>`;
+    else if(msg.includes('no longer available')||msg.includes('deprecated'))
+      html=`<span style="color:var(--err)">⚠ <strong>Modelo deprecado.</strong> Actualizá la app descargando la última versión.</span>`;
+    typing.innerHTML=html; history.pop();
+  }
   document.getElementById('msgs').scrollTop=99999;
   busy=false; document.getElementById('sendbtn').disabled=false; document.getElementById('inp').focus();
 }
@@ -459,7 +469,7 @@ async function callClaude() {
 async function callGemini() {
   const key=localStorage.getItem('fredx_gemini_key')||'';
   if(!key) throw new Error('Configurá la API key de Gemini en ⚙️');
-  const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:SYSTEM}]},contents:history.map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]}))})});
+  const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system_instruction:{parts:[{text:SYSTEM}]},contents:history.map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]}))})});
   if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||`HTTP ${res.status}`);}
   const d=await res.json(); return d.candidates?.[0]?.content?.parts?.[0]?.text||'Sin respuesta.';
 }
