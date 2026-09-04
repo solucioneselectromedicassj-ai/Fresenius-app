@@ -207,6 +207,44 @@ textarea:focus{outline:none;border-color:var(--accent);background:var(--surface)
 .note-actions.editing .note-btn-save{display:inline-block}
 .no-results{text-align:center;color:var(--t3);padding:40px 20px;font-size:14px}
 .db-count{font-size:11px;color:var(--t3);margin-bottom:10px;text-align:right}
+
+/* ── INTERACTIVE MACHINE ── */
+.mode-bar{display:flex;gap:8px;margin-bottom:12px}
+.mode-btn{flex:1;padding:7px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--s2);color:var(--t2);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s}
+.mode-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.comp-grid-inter{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:4px}
+.ci-sub-label{grid-column:1/-1;font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.8px;margin-top:6px;padding-left:2px}
+.ci-card{border-radius:12px;padding:10px 6px 8px;text-align:center;cursor:pointer;border:2px solid transparent;transition:all .15s;user-select:none;-webkit-tap-highlight-color:transparent}
+.ci-card:active{transform:scale(.95)}
+.ci-icon{font-size:22px;margin-bottom:3px}
+.ci-id{font-size:10px;font-weight:700;opacity:.65;letter-spacing:.5px;margin-bottom:2px}
+.ci-name{font-size:11px;font-weight:600;line-height:1.3}
+.ci-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none}
+.ci-overlay.on{display:block}
+.ci-panel{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-radius:20px 20px 0 0;z-index:201;transform:translateY(110%);transition:transform .3s cubic-bezier(.4,0,.2,1);max-height:82dvh;overflow-y:auto;padding-bottom:env(safe-area-inset-bottom,12px)}
+.ci-panel.on{transform:translateY(0)}
+.ci-handle{width:40px;height:4px;background:var(--border2);border-radius:2px;margin:12px auto 0}
+.ci-head{padding:10px 16px 0;display:flex;align-items:flex-start;gap:12px}
+.ci-head-icon{font-size:32px;flex-shrink:0;margin-top:2px}
+.ci-head-info{flex:1;min-width:0}
+.ci-head-name{font-size:15px;font-weight:700;color:var(--text);line-height:1.3}
+.ci-head-tipo{font-size:11px;color:var(--t3);margin-top:2px}
+.ci-close{width:32px;height:32px;border:none;background:var(--s3);border-radius:50%;cursor:pointer;font-size:16px;color:var(--t2);flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.ci-toggle{display:flex;margin:10px 16px 0;border:1px solid var(--border2);border-radius:8px;overflow:hidden}
+.ci-toggle-btn{flex:1;padding:7px;border:none;background:transparent;font-size:12px;font-weight:600;color:var(--t2);cursor:pointer;transition:all .15s}
+.ci-toggle-btn.active{background:var(--accent);color:#fff}
+.ci-body{padding:10px 16px 16px}
+.ci-sec{margin-top:12px}
+.ci-sec-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--t3);margin-bottom:6px}
+.ci-desc{font-size:13px;color:var(--t2);line-height:1.65}
+.ci-specs{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.ci-spec{background:var(--s2);border-radius:8px;padding:6px 8px;border:1px solid var(--border)}
+.ci-spec-l{font-size:10px;color:var(--t3)}
+.ci-spec-v{font-size:12px;font-weight:700;color:var(--accent-t)}
+.ci-loc-box{font-size:12px;color:var(--t2);background:var(--s2);border-radius:8px;padding:8px 10px;line-height:1.5}
+.ci-cal-box{font-size:12px;color:var(--t2);background:var(--warn-l);border-left:3px solid var(--warn);border-radius:0 8px 8px 0;padding:8px 10px;line-height:1.55;margin-top:6px}
+.ci-maint-box{font-size:12px;color:var(--t2);background:var(--ok-l);border-left:3px solid var(--ok);border-radius:0 8px 8px 0;padding:8px 10px;line-height:1.55;margin-top:6px}
+.ci-ask{width:100%;margin-top:14px;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:14px;font-weight:700;cursor:pointer}
 </style>
 </head>
 <body>
@@ -370,6 +408,22 @@ textarea:focus{outline:none;border-color:var(--accent);background:var(--surface)
 
 <!-- MANUAL -->
 <div class="manual-view" id="manualView">
+
+  <!-- INTERACTIVO -->
+  <div class="manual-section open" id="msInter">
+    <div class="manual-section-header" onclick="toggleManualSection('msInter')">
+      <span style="font-size:18px">🖥️</span>
+      <h3>Tocá un componente para saber qué hace</h3>
+      <span class="manual-chev">▾</span>
+    </div>
+    <div class="manual-section-body">
+      <div class="mode-bar">
+        <button class="mode-btn active" id="mb-b" onclick="setInterMode('basico')">👤 Personal nuevo</button>
+        <button class="mode-btn" id="mb-t" onclick="setInterMode('tecnico')">🔧 Técnico</button>
+      </div>
+      <div class="comp-grid-inter" id="ciGrid"></div>
+    </div>
+  </div>
 
   <!-- CIRCUITO -->
   <div class="manual-section open" id="msCircuito">
@@ -673,6 +727,95 @@ textarea:focus{outline:none;border-color:var(--accent);background:var(--surface)
       <div style="margin-top:10px;padding:10px 12px;background:var(--warn-l);border-radius:10px;border-left:3px solid var(--warn);font-size:13px;color:var(--t2)">
         ⚠️ <strong>Principio de contracorriente:</strong> el dializante fluye en dirección opuesta a la sangre dentro del dializador. Esto maximiza el gradiente de concentración a lo largo de toda la membrana y mejora la eficiencia de la diálisis.
       </div>
+    </div>
+  </div>
+
+
+  <!-- VÁLVULAS -->
+  <div class="manual-section" id="msValvulas">
+    <div class="manual-section-header" onclick="toggleManualSection('msValvulas')">
+      <span style="font-size:18px">🔵</span>
+      <h3>Válvulas solenoides — dónde están y qué hacen</h3>
+      <span class="manual-chev">▾</span>
+    </div>
+    <div class="manual-section-body">
+      <p style="font-size:12px;color:var(--t3);margin-bottom:12px">La 4008S tiene entre 14 y 18 electroválvulas según la versión. El 5008 puede tener más de 30. Todas trabajan a 24V DC. Test individual: <strong>Menú Servicio → Test de válvulas → seleccionar</strong>. Escuchar el clic de apertura/cierre.</p>
+
+      <div id="valvList"></div>
+
+      <div style="margin-top:14px;padding:10px 12px;background:var(--err-l);border-left:3px solid var(--err);border-radius:0 10px 10px 0;font-size:13px;color:var(--t2)">
+        ⚠️ <strong>Importante:</strong> Antes de reemplazar una válvula, siempre medir la bobina con el tester (modo Ω). NC normales: 100–200 Ω. NA normales: 80–150 Ω. Bobina abierta (∞) o en cortocircuito (0 Ω) → válvula defectuosa eléctrica. Membrana que no sella → válvula defectuosa mecánica.
+      </div>
+    </div>
+  </div>
+
+  <!-- CALIBRACIÓN MENÚ -->
+  <div class="manual-section" id="msCaliMenu">
+    <div class="manual-section-header" onclick="toggleManualSection('msCaliMenu')">
+      <span style="font-size:18px">🎛️</span>
+      <h3>Menú de calibración — cómo entrar y qué hay</h3>
+      <span class="manual-chev">▾</span>
+    </div>
+    <div class="manual-section-body">
+
+      <div style="background:var(--err-l);border-left:3px solid var(--err);border-radius:0 10px 10px 0;padding:10px 12px;font-size:13px;color:var(--t2);margin-bottom:14px">
+        ⚠️ <strong>¡ADVERTENCIA ANTES DE CALIBRAR!</strong> Algunos ajustes de calibración <strong>no tienen "deshacer"</strong>. Si borrás un valor o ajustás mal un offset, puede quedar configurado incorrectamente hasta que lo recalibres. Siempre anotá los valores originales antes de cambiar cualquier cosa.
+      </div>
+
+      <div class="cal-card" style="margin-bottom:10px">
+        <div class="cal-header"><span class="cal-tool">🔑</span><div><div class="cal-title">Cómo acceder al menú de servicio</div><div class="cal-subtitle">4008S / 4008H</div></div></div>
+        <ol class="cal-steps">
+          <li>Desde la <strong>pantalla principal</strong> (máquina en stand-by o en rinse)</li>
+          <li>Presionar <strong>simultáneamente</strong> las teclas de confirmación específicas del modelo (varía según versión de firmware — consultar el manual de servicio impreso del equipo)</li>
+          <li>Ingresar el <strong>código PIN de servicio técnico</strong> (no el de operador). El PIN varía por instalación y versión</li>
+          <li>Aparece el <strong>Menú de Servicio Técnico</strong> con las siguientes opciones principales</li>
+        </ol>
+      </div>
+
+      <p style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px">📂 Estructura del menú de servicio:</p>
+
+      <div id="menuTree"></div>
+
+      <div style="margin-top:14px">
+        <p style="font-size:13px;font-weight:700;color:var(--err);margin-bottom:8px">⚠️ Qué se "borra" o resetea en calibración venosa:</p>
+        <div style="background:var(--warn-l);border-left:3px solid var(--warn);border-radius:0 10px 10px 0;padding:10px 12px;font-size:13px;color:var(--t2)">
+          Cuando ejecutás el <strong>Zero de presión venosa (PV)</strong>, la máquina resetea el offset de ese transductor a cero. Si hay sangre o presión residual en la cápsula al hacer el zero, esa presión residual quedará incorporada como "cero" y todas las lecturas posteriores estarán desviadas. <br><br>
+          <strong>Regla de oro:</strong> Siempre hacer el zero con la línea clampada, sin sangre en el circuito y con la cápsula nueva instalada. Si zeraste mal: repetir el procedimiento con la condición correcta.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONEXIÓN AL PACIENTE -->
+  <div class="manual-section" id="msConexion">
+    <div class="manual-section-header" onclick="toggleManualSection('msConexion')">
+      <span style="font-size:18px">🩺</span>
+      <h3>Conexión al paciente — paso a paso</h3>
+      <span class="manual-chev">▾</span>
+    </div>
+    <div class="manual-section-body">
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button class="mode-btn active" id="cx-fis" onclick="setCxMode('fistula')">💉 Fístula / FAV</button>
+        <button class="mode-btn" id="cx-cat" onclick="setCxMode('cateter')">🔌 Catéter</button>
+      </div>
+      <div id="cxContent"></div>
+    </div>
+  </div>
+
+  <!-- CIRCUITOS COMPLETOS -->
+  <div class="manual-section" id="msCircCompleto">
+    <div class="manual-section-header" onclick="toggleManualSection('msCircCompleto')">
+      <span style="font-size:18px">🌊</span>
+      <h3>Circuito completo — agua limpia, sucia y sangre</h3>
+      <span class="manual-chev">▾</span>
+    </div>
+    <div class="manual-section-body">
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <button class="mode-btn active" id="circ-ag" onclick="setCircMode('agua')">💧 Agua / Dializante</button>
+        <button class="mode-btn" id="circ-sg" onclick="setCircMode('sangre')">🩸 Sangre</button>
+        <button class="mode-btn" id="circ-em" onclick="setCircMode('emergencia')">🚨 Emergencias</button>
+      </div>
+      <div id="circContent"></div>
     </div>
   </div>
 
@@ -998,5 +1141,569 @@ function askAbout(id) {
   document.getElementById('inp').focus();
 }
 </script>
+
+<div class="ci-overlay" id="ciOverlay" onclick="closeCiPanel()"></div>
+<div class="ci-panel" id="ciPanel">
+  <div class="ci-handle"></div>
+  <div class="ci-head">
+    <div class="ci-head-icon" id="ciIcon">🔧</div>
+    <div class="ci-head-info">
+      <div class="ci-head-name" id="ciName">Componente</div>
+      <div class="ci-head-tipo" id="ciTipo">Tipo</div>
+    </div>
+    <button class="ci-close" onclick="closeCiPanel()">✕</button>
+  </div>
+  <div class="ci-toggle">
+    <button class="ci-toggle-btn active" id="cit-b" onclick="setInterMode('basico');renderCiPanel()">👤 Básico</button>
+    <button class="ci-toggle-btn" id="cit-t" onclick="setInterMode('tecnico');renderCiPanel()">🔧 Técnico</button>
+  </div>
+  <div class="ci-body" id="ciBody"></div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// DATOS DE COMPONENTES INTERACTIVOS
+// ══════════════════════════════════════════════════════
+let ciMode = 'basico';
+let ciCurrent = null;
+
+const CI = [
+  // ── SANGRE ──
+  {id:'P5',icon:'❤️',name:'Bomba de sangre',tipo:'Peristáltica de rodillos',color:'#FED7D7',border:'#FC8181',sub:'🩸 Circuito de sangre',
+   basico:'La bomba más importante: hace circular la sangre del paciente a través del dializador. Los rodillos comprimen la línea de silicona para mover la sangre. El médico programa el flujo (200–500 mL/min).',
+   tecnico:'Motor paso a paso o DC con encoder de velocidad. La oclusión de los rodillos debe ser mínima (justo para mover sin hemolizar). Verificar flujo real volumétricamente: 300 mL/min = 300 mL recolectados en 60 s ±5%. Calibrar en Menú Servicio → Calibración bomba sangre.',
+   specs:[{l:'Flujo normal',v:'200–500 mL/min'},{l:'Calibración',v:'Volumétrica ±5%'},{l:'Motor',v:'DC c/ encoder'},{l:'Oclusión',v:'Mínima'}],
+   ubicacion:'Panel frontal izquierdo. Rotor con rodillos visible con la línea de sangre instalada.',
+   cal:'Instalar línea con agua. Programar 300 mL/min. Recolectar 60 s en probeta. Si difiere >5%: ajustar en Menú Servicio → Cal. Bomba Sangre.',
+   mant:'Inspeccionar rodillos mensualmente (desgaste/aplastamiento). Limpiar track con paño húmedo. Verificar oclusión semestral.'},
+  {id:'PA',icon:'📊',name:'Transductor presión arterial',tipo:'Sensor piezoeléctrico + cápsula',color:'#FED7D7',border:'#FC8181',sub:null,
+   basico:'Mide la presión de la sangre en la línea arterial (antes de la bomba). Los valores son negativos porque la bomba aspira la sangre. Si la presión es muy negativa, la bomba está esforzándose demasiado.',
+   tecnico:'Transductor piezoeléctrico protegido por cápsula hidrofóbica desechable. Con línea clampada hacer zero. Calibrar con manómetro: aplicar -100 mmHg → pantalla debe mostrar -100 ±10 mmHg. Si hay sangre en la cápsula: reemplazar cápsula y verificar diafragma del transductor.',
+   specs:[{l:'Rango normal',v:'-50 a -250 mmHg'},{l:'Alarma',v:'< -300 mmHg'},{l:'Cápsula',v:'Desechable/sesión'},{l:'Error tolerable',v:'±10 mmHg'}],
+   ubicacion:'Panel frontal. Conector en la línea arterial entre el acceso vascular y la bomba de sangre.',
+   cal:'1) Clampear línea arterial. 2) Menú: Zero de PA. 3) Verificar con manómetro externo: -100 mmHg → pantalla debe mostrar -100 ±10. 4) Ajustar offset en Menú Servicio si hay derivación.',
+   mant:'Reemplazar cápsula en cada sesión. Si hay sangre en el transductor: limpiar con agua destilada.'},
+  {id:'PV',icon:'📊',name:'Transductor presión venosa',tipo:'Sensor piezoeléctrico + cápsula',color:'#FED7D7',border:'#FC8181',sub:null,
+   basico:'Mide la presión de la sangre en la línea venosa (después del dializador, antes de volver al paciente). Valores positivos normales (50–250 mmHg). Si sube mucho, hay alguna obstrucción.',
+   tecnico:'Igual al transductor arterial pero en la línea venosa. La PV sube progresivamente si el dializador se coagula (junto con TMP). Hacer zero con línea clampada y trampa a 2/3 de nivel. Calibrar igual que PA con valores positivos.',
+   specs:[{l:'Rango normal',v:'50–250 mmHg'},{l:'Alarma',v:'> 300 mmHg'},{l:'Cápsula',v:'Desechable/sesión'},{l:'Error tolerable',v:'±10 mmHg'}],
+   ubicacion:'Panel frontal. Conectado a la cámara venosa (trampa de aire) en la línea venosa.',
+   cal:'Igual que PA pero con valores positivos. Zero con línea clampada. Verificar con manómetro: +100 mmHg → pantalla ±10 mmHg.',
+   mant:'Reemplazar cápsula en cada sesión. Misma inspección que PA.'},
+  {id:'TR',icon:'🫁',name:'Trampa de aire (cámara venosa)',tipo:'Cámara desechable de retención',color:'#FED7D7',border:'#FC8181',sub:null,
+   basico:'Última barrera antes de que la sangre vuelva al paciente. Retiene las burbujas de aire para que no entren en la vena. El nivel de sangre debe estar a 2/3 de la cámara, ni más ni menos.',
+   tecnico:'Cámara plástica con filtro de malla 200μm integrado. Nivel correcto (2/3) es crítico para la sensibilidad del detector de burbujas (DB). Nivel alto → burbujas llegan al detector sin amortiguar. Nivel bajo → falsa alarma de DB. Inspeccionar filtro de malla buscando fibrina al final de la sesión.',
+   specs:[{l:'Nivel ideal',v:'2/3 llena'},{l:'Filtro',v:'Malla 200 μm'},{l:'Cambio',v:'Cada sesión (desechable)'}],
+   ubicacion:'Línea venosa, entre el dializador y el detector de burbujas.',
+   cal:'No aplica (desechable). Ajustar nivel antes de conectar al paciente.',
+   mant:'Desechable, reemplazar cada sesión. Coágulos recurrentes → revisar dosis de heparina.'},
+  {id:'DB',icon:'📡',name:'Detector de burbujas',tipo:'Sensor ultrasónico',color:'#FED7D7',border:'#FC8181',sub:null,
+   basico:'Detecta si hay aire en la línea venosa. Si detecta una burbuja, para la bomba de sangre al instante y activa la alarma. Es una protección de vida: el aire en la vena puede causar embolia.',
+   tecnico:'Par de cristales piezoeléctricos que emiten y reciben ultrasonido a través de la línea venosa. El aire atenúa la señal ultrasónica → alarma. Falsas alarmas: detector sucio (limpiar con gel ecográfico), línea mal asentada en el canal, nivel alto en trampa. Sensibilidad: burbujas > 0.05 mL.',
+   specs:[{l:'Principio',v:'Ultrasonido'},{l:'Sensibilidad',v:'Burbuja > 0.05 mL'},{l:'Limpieza',v:'Gel ecográfico'}],
+   ubicacion:'Panel frontal. Línea venosa justo antes del retorno al paciente, después de la trampa de aire.',
+   cal:'Verificar sensibilidad con micro-burbuja controlada en el test anual. No requiere calibración de offset.',
+   mant:'Limpiar canal del detector con gel ecográfico en cada mantenimiento. Verificar que la guía de la línea no esté desgastada.'},
+  {id:'HP',icon:'💉',name:'Bomba de heparina',tipo:'Bomba de jeringa motorizada',color:'#FED7D7',border:'#FC8181',sub:null,
+   basico:'Infunde heparina durante la sesión para evitar que la sangre se coagule en el circuito. El médico programa la dosis. Si no funciona, el dializador y las líneas pueden coagularse.',
+   tecnico:'Motor paso a paso que empuja el émbolo de la jeringa. Verificar que el tamaño de jeringa configurado en pantalla coincida con la jeringa real (5, 10, 20, 50 mL). Error habitual: jeringa de 10 mL configurada como 20 mL → dosis doble. Revisar línea de heparina por coágulos si la TMP sube prematuramente.',
+   specs:[{l:'Jeringa típica',v:'10 o 20 mL'},{l:'Dosis',v:'Según prescripción médica'},{l:'Error habitual',v:'Tamaño mal configurado'}],
+   ubicacion:'Panel frontal. Soporte deslizante donde se instala la jeringa de heparina.',
+   cal:'No requiere calibración de campo. Verificar tamaño de jeringa en cada sesión.',
+   mant:'Limpiar el soporte y el mecanismo de empuje mensualmente. Verificar línea de infusión.'},
+  // ── HIDRÁULICO ──
+  {id:'V1',icon:'💧',name:'V1 — Electroválvula entrada agua',tipo:'Solenoide NC 24V DC',color:'#BEE3F8',border:'#63B3ED',sub:'💧 Circuito hidráulico',
+   basico:'Controla el ingreso del agua tratada de la planta. Se abre automáticamente al iniciar la sesión y se cierra al terminar. Sin agua no hay dializante y no se puede dializar.',
+   tecnico:'Electroválvula normalmente cerrada (NC), 24V DC, Ø 3/8". Medir bobina con tester: ~150 Ω. Se activa en: Rinse, Tratamiento, Desinfección. Si queda cerrada: no entra agua → conductividad baja. Si queda abierta: agua sin control → alarma de presión.',
+   specs:[{l:'Tensión',v:'24V DC'},{l:'Tipo',v:'NC (norm. cerrada)'},{l:'Bobina',v:'~150 Ω'},{l:'Conexión',v:'Ø 3/8" push-in'}],
+   ubicacion:'Panel trasero inferior. Primer punto de entrada del agua tratada a la máquina.',
+   cal:'No calibrable. Test: Menú Servicio → Test Electroválvulas → V1. Escuchar clic de apertura/cierre.',
+   mant:'Cada 2 años o ante fugas: reemplazar membrana interna. Verificar en cada mantenimiento preventivo.'},
+  {id:'P2',icon:'🧪',name:'P2 — Bomba de concentrado ácido',tipo:'Peristáltica de dosificación',color:'#BEE3F8',border:'#63B3ED',sub:null,
+   basico:'Dosifica el concentrado ácido (del bidón) para mezclarlo con el agua. La cantidad exacta determina la conductividad del dializante. Muy poca dosificación → conductividad baja. Demasiada → conductividad alta.',
+   tecnico:'Bomba peristáltica de precisión con válvulas check. Los steps (pasos) indican la cantidad dosificada por ciclo. Normal: 0080–0250 steps. Válvulas check desgastadas → conductividad fluctuante. Limpiar rotor y válvulas mensualmente.',
+   specs:[{l:'Steps normales',v:'0080–0250'},{l:'Tipo',v:'Peristáltica + check valves'},{l:'Fluido',v:'Concentrado ácido A'}],
+   ubicacion:'Panel hidráulico. Línea conectada al bidón de concentrado ácido.',
+   cal:'Verificar steps en pantalla. Comparar conductividad vs conductímetro externo. Si hay diferencia: Menú Servicio → Calibración bomba concentrado.',
+   mant:'Limpiar rotor y válvulas check mensualmente. Conductividad fluctuante → revisar válvulas check primero.'},
+  {id:'P3',icon:'🫧',name:'P3 — Bomba de bicarbonato',tipo:'Peristáltica de dosificación',color:'#BEE3F8',border:'#63B3ED',sub:null,
+   basico:'Dosifica el bicarbonato (del cartucho o bolsa) para ajustar el pH del dializante. Trabaja junto con la bomba de concentrado. Si el cartucho está agotado o mojado, la conductividad de bicarbonato falla.',
+   tecnico:'Peristáltica similar a P2. Steps normales: 0150–0400 (varía según concentración del cartucho). Cartucho húmedo o apelmazado = steps fuera de rango. Enjuagar el circuito de bicarbonato después de cada sesión para evitar cristalización.',
+   specs:[{l:'Steps normales',v:'0150–0400'},{l:'Tipo',v:'Peristáltica + check valves'},{l:'Fluido',v:'Bicarbonato B'}],
+   ubicacion:'Panel hidráulico. Conector al cartucho o bolsa de bicarbonato.',
+   cal:'Igual que P2: verificar steps vs conductividad de bicarbonato en pantalla. Menú Servicio → Calibración bomba bicarbonato.',
+   mant:'Enjuagar el circuito de bicarbonato después de cada sesión. Cambiar cartucho según indicación de alarma.'},
+  {id:'P1',icon:'🔄',name:'P1 — Bomba de dializante',tipo:'Peristáltica / centrífuga',color:'#BEE3F8',border:'#63B3ED',sub:null,
+   basico:'Hace circular el dializante (el líquido de diálisis) por toda la máquina y el dializador. Su velocidad controla el flujo de dializante (300–800 mL/min). Sin esta bomba no hay circulación de dializante.',
+   tecnico:'Motor DC con encoder de velocidad. Si el flujo real difiere del programado >10%: calibrar encoder o revisar acoplamiento mecánico. Ruido de rodamiento → reemplazar. Verificar correa si aplica al modelo. Limpiar con ácido cítrico ante incrustaciones.',
+   specs:[{l:'Flujo normal',v:'300–800 mL/min'},{l:'Motor',v:'DC con encoder'},{l:'Error tolerable',v:'±10%'}],
+   ubicacion:'Módulo hidráulico central. Detrás del panel frontal.',
+   cal:'Medir volumétricamente: recolectar 60 s a la salida. Debe coincidir ±5% con el setpoint. Menú Servicio → Calibración flujo dializante.',
+   mant:'Limpiar con ácido cítrico para eliminar incrustaciones. Revisar rodamiento anualmente.'},
+  {id:'DG',icon:'💨',name:'DG — Módulo de degassing',tipo:'Cámara de membrana hidrofóbica',color:'#BEE3F8',border:'#63B3ED',sub:null,
+   basico:'Elimina el CO₂ y las burbujas de gas disueltas en el dializante antes de que lleguen al dializador. Si no funciona bien, el dializante llega con burbujas y la conductividad se vuelve inestable.',
+   tecnico:'Cámara con membrana hidrofóbica (Gore-Tex) conectada a bomba de vacío P4. Presión de vacío objetivo: 600–760 mmHg. Filtro pre-degassing: cambio cada 6 meses. Si la presión no se alcanza pese a que P4 funciona: buscar fugas en el circuito de vacío con agua jabonosa.',
+   specs:[{l:'Presión vacío',v:'600–760 mmHg'},{l:'Membrana',v:'Hidrofóbica (Gore-Tex)'},{l:'Filtro pre-DG',v:'Cambio cada 6 meses'}],
+   ubicacion:'Módulo hidráulico superior central. Conectado a la bomba de vacío P4.',
+   cal:'Medir presión de vacío con manómetro en el punto de test. Si < 600 mmHg con filtro limpio: buscar fugas o revisar P4.',
+   mant:'Filtro pre-degassing: inspección mensual, cambio cada 6 meses. Membrana: cada 2-3 años.'},
+  {id:'P4',icon:'🌀',name:'P4 — Bomba de vacío',tipo:'Bomba de membrana o paletas',color:'#BEE3F8',border:'#63B3ED',sub:null,
+   basico:'Crea el vacío necesario para que el desgasificador funcione. Si la presión de vacío no es suficiente, el dializante llega con burbujas y la conductividad se vuelve inestable.',
+   tecnico:'Bomba de membrana o paletas rotativas. Desgaste → presión de vacío reducida. Verificar: arrancar máquina, esperar 5 min, medir presión de vacío. Si no alcanza 600 mmHg con filtro limpio y sin fugas → bomba desgastada. Medir corriente de consumo: si supera nominal → desgaste mecánico.',
+   specs:[{l:'Presión objetivo',v:'600–760 mmHg'},{l:'Verificación',v:'Manómetro de vacío'},{l:'Acción',v:'Si < 600 mmHg → revisar'}],
+   ubicacion:'Módulo hidráulico. Conectado al módulo DG mediante manguera de vacío.',
+   cal:'No calibrable. Verificar rendimiento con manómetro. Si baja presión con filtro limpio y sin fugas: overhaul o reemplazo.',
+   mant:'Verificar presión máxima semestralmente. Escuchar rodamientos: ruido anormal = desgaste.'},
+  {id:'V2',icon:'↔️',name:'V2 — Válvula de bypass',tipo:'Solenoide NA — fail-safe crítico',color:'#BEE3F8',border:'#63B3ED',sub:null,
+   basico:'Desvía el dializante para que NO llegue al paciente cuando hay una alarma de conductividad, temperatura o contaminación. Es la válvula de seguridad más importante. Se activa automáticamente con cualquier alarma de calidad.',
+   tecnico:'Solenoide NA (normalmente abierta al bypass). Fail-safe: sin energía → bypass automático. Energizada en tratamiento → dializante va al dializador. Si queda en bypass sin alarma: verificar solenoide 24V DC (~120Ω). Si queda en tratamiento durante una alarma: REEMPLAZAR URGENTEMENTE.',
+   specs:[{l:'Tipo',v:'NA — norm. abierta (bypass)'},{l:'Tensión',v:'24V DC'},{l:'Bobina',v:'~120 Ω'},{l:'Fail-safe',v:'Sin energía = bypass'}],
+   ubicacion:'Módulo hidráulico central. Punto de bifurcación hacia el dializador o hacia el drenaje de bypass.',
+   cal:'No calibrable. Test funcional: Menú Servicio → Test Electroválvulas → V2. Verificar que entre en bypass durante alarmas.',
+   mant:'Verificar funcionamiento en cada mantenimiento. Fugas por bypass en tratamiento → reemplazar membrana.'},
+  {id:'V3',icon:'🚰',name:'V3 — Válvula de drenaje',tipo:'Solenoide NC 24V DC',color:'#BEE3F8',border:'#63B3ED',sub:null,
+   basico:'Abre para drenar el dializante usado hacia la cloaca. Se activa en: fin del tratamiento, rinse y desinfección. Si no abre, el dializante no drena y la máquina no puede renovar el líquido.',
+   tecnico:'NC (normalmente cerrada), 24V DC. Activa en: drenaje, rinse, desinfección. Si queda cerrada: no drena → backpressure. Si queda abierta durante tratamiento → UF descontrolada. Verificar bobina con tester.',
+   specs:[{l:'Tipo',v:'NC (norm. cerrada)'},{l:'Tensión',v:'24V DC'},{l:'Activa en',v:'Drenaje, Rinse, Desinfección'}],
+   ubicacion:'Módulo hidráulico inferior. Tubería de salida hacia el desagüe.',
+   cal:'No calibrable. Test: Menú Servicio → Test Electroválvulas → V3.',
+   mant:'Verificar trimestralmente. Fugas al drenaje durante tratamiento: reemplazar membrana.'},
+  {id:'UF',icon:'⚖️',name:'V5/V6 — Válvulas de balanza UF',tipo:'Solenoides de membrana, par sincronizado',color:'#BEE3F8',border:'#63B3ED',sub:null,
+   basico:'Controlan el balance hídrico para extraer exactamente el volumen programado del paciente. Si alguna tiene fugas, el volumen extraído puede ser mayor o menor al programado.',
+   tecnico:'Par de válvulas de membrana que alternativamente llenan y vacían las cámaras de balance. Pequeñas fugas internas → error de balance acumulativo. Calibrar el balance con recipientes de volumen conocido y balanza externa. Error tolerable: <50 mL/sesión.',
+   specs:[{l:'Tipo',v:'Membrana NC/NA par'},{l:'Tensión',v:'24V DC'},{l:'Error tolerable',v:'< 50 mL/sesión'}],
+   ubicacion:'Módulo de balance hidráulico, panel trasero o lateral.',
+   cal:'Menú Servicio → Calibración UF. Usar recipientes de volumen conocido + balanza externa. Ver procedimiento de calibración de balanza.',
+   mant:'Verificar hermeticidad semestral. Ante errores de balance persistentes: reemplazar membranas.'},
+  // ── SENSORES ──
+  {id:'CC',icon:'📏',name:'Célula de conductividad',tipo:'Electrodos de platino sumergidos',color:'#C6F6D5',border:'#68D391',sub:'📡 Sensores y medición',
+   basico:'Mide qué tan concentrado está el dializante. Si el valor está en el rango programado (13–15.5 mS/cm), la mezcla es correcta. Si está sucia o calcificada, da lecturas incorrectas y la máquina puede dar falsas alarmas.',
+   tecnico:'Par de electrodos de platino. Mide la resistencia entre electrodos, corregida por temperatura (PT1000). Calcificación = lecturas falsas. Los ADC-digits en pantalla son el valor crudo del ADC antes de conversión (referencia técnica). Normal: 0050–0200 ADC. Descalcificar con ácido cítrico 3%.',
+   specs:[{l:'Rango normal',v:'13.0–15.5 mS/cm'},{l:'ADC-digits',v:'0050–0200'},{l:'Material',v:'Electrodos platino'},{l:'Desviación calibr.',v:'< ±0.2 mS/cm'}],
+   ubicacion:'Circuito de dializante, aguas arriba del dializador, después del calentador.',
+   cal:'1) Bypass activo. 2) Conductímetro externo en punto de bypass. 3) Si difieren >0.2 mS/cm: Menú Servicio → Calibración conductividad → ajustar offset. Primero descalcificar si hay incrustaciones.',
+   mant:'Descalcificar trimestralmente con ácido cítrico 2-3%, 15 min. No usar abrasivos en los electrodos.'},
+  {id:'HT',icon:'🔥',name:'Calentador eléctrico',tipo:'Resistencia blindada + termostato',color:'#C6F6D5',border:'#68D391',sub:null,
+   basico:'Calienta el dializante a la temperatura programada (normalmente 37°C). Si no calienta bien: alarma de temperatura baja. Si calienta de más: riesgo para el paciente. El calcio del agua reduce su eficiencia con el tiempo.',
+   tecnico:'Resistencia blindada en bloque de aluminio. Se calcifica → pérdida de eficiencia. Dos PT1000: uno de control (CC1) y uno de seguridad (SS2). Medir resistencia eléctrica de la resistencia (continuidad). Medir PT1000 con tester en modo Ω. Descalcificar anualmente.',
+   specs:[{l:'Temp. objetivo',v:'35–38 °C'},{l:'Potencia',v:'~500 W'},{l:'Sensor',v:'PT1000 (2 unid.)'},{l:'Riesgo',v:'Calcificación'}],
+   ubicacion:'Módulo hidráulico central. Bloque de aluminio con conexiones de dializante y conectores eléctricos.',
+   cal:'Comparar temperatura en pantalla con termómetro externo en bypass. Diferencia >0.5°C: Menú Servicio → Calibración temperatura → ajustar offset.',
+   mant:'Descalcificar anualmente con ácido cítrico 3%. Si no alcanza setpoint con flujo normal: inspeccionar incrustaciones.'},
+  {id:'PT1K',icon:'🌡️',name:'Sensor PT1000',tipo:'Termoresistencia de platino',color:'#C6F6D5',border:'#68D391',sub:null,
+   basico:'Mide la temperatura del dializante. Si está defectuoso, la máquina puede creer que la temperatura es incorrecta y dar falsas alarmas, o no dar alarma cuando debería. También afecta la lectura de conductividad.',
+   tecnico:'Valores de referencia: 0°C=1000Ω, 20°C=1077Ω, 37°C=1143Ω, 100°C=1385Ω. Medir con tester en Ω con sensor desconectado a temperatura ambiente conocida. Si difiere >10Ω del teórico → derivado → recalibrar o reemplazar. Un PT1000 derivado genera errores de conductividad porque la corrección térmica falla.',
+   specs:[{l:'0 °C',v:'1000 Ω'},{l:'20 °C',v:'1077 Ω'},{l:'37 °C',v:'1143 Ω'},{l:'Coef.',v:'3.85 Ω/°C'}],
+   ubicacion:'Integrado en el bloque del calentador o en vaina de inmersión aguas abajo del calentador.',
+   cal:'Desconectar el sensor. Medir resistencia a temperatura ambiente conocida. Comparar con tabla teórica. Si difiere >10Ω: ajustar offset en Menú Servicio → Cal. temperatura o reemplazar.',
+   mant:'No requiere mantenimiento preventivo. Reemplazar si la resistencia medida difiere >10Ω de la teórica.'},
+  {id:'BLD',icon:'🔬',name:'Detector hemoglobina (blood leak)',tipo:'Sensor óptico fotoeléctrico 660nm',color:'#C6F6D5',border:'#68D391',sub:null,
+   basico:'Detecta si la sangre del paciente está pasando al dializante a través de la membrana del dializador. Es una alarma crítica de seguridad. Cuando se activa: la máquina entra en bypass y para. NUNCA retornar la sangre sin verificar primero si la alarma es real.',
+   tecnico:'Par LED/fotodetector a 660nm (pico de absorción de hemoglobina). Sensibilidad: >0.03 g/dL Hb. Falsas alarmas por: burbujas en el dializante, colorantes del concentrado, detergente residual. Limpiar celda óptica con agua destilada. Confirmación: tomar muestra de dializante y observar color real.',
+   specs:[{l:'Sensibilidad',v:'>0.03 g/dL Hb'},{l:'Longitud onda',v:'660 nm'},{l:'Acción',v:'Bypass + paro bomba'},{l:'Falsa alarma',v:'Burbujas, detergente'}],
+   ubicacion:'Circuito de salida del dializante, entre el dializador y el drenaje.',
+   cal:'No calibrable en campo. Verificar sensibilidad con muestra de referencia en el mantenimiento anual.',
+   mant:'Limpiar celda óptica con agua destilada trimestralmente. Ante falsa alarma: descartar ruptura real primero, luego limpiar.'}
+];
+
+// ══════════════════════════════════════════════════════
+// FUNCIONES INTERACTIVAS
+// ══════════════════════════════════════════════════════
+function renderCiGrid() {
+  const grid = document.getElementById('ciGrid');
+  if(!grid) return;
+  let lastSub = null;
+  grid.innerHTML = CI.map(c => {
+    let prefix = '';
+    if(c.sub && c.sub !== lastSub) { lastSub = c.sub; prefix = `<div class="ci-sub-label">${c.sub}</div>`; }
+    return prefix + `<div class="ci-card" style="background:${c.color};border-color:${c.border}" onclick="openCiPanel('${c.id}')">
+      <div class="ci-icon">${c.icon}</div>
+      <div class="ci-id">${c.id}</div>
+      <div class="ci-name">${c.name.split('—').pop().split('(')[0].trim()}</div>
+    </div>`;
+  }).join('');
+}
+
+function openCiPanel(id) {
+  ciCurrent = CI.find(c => c.id === id);
+  if(!ciCurrent) return;
+  document.getElementById('ciIcon').textContent = ciCurrent.icon;
+  document.getElementById('ciName').textContent = ciCurrent.name;
+  document.getElementById('ciTipo').textContent = ciCurrent.tipo;
+  renderCiPanel();
+  document.getElementById('ciPanel').classList.add('on');
+  document.getElementById('ciOverlay').classList.add('on');
+}
+
+function renderCiPanel() {
+  if(!ciCurrent) return;
+  document.getElementById('cit-b').classList.toggle('active', ciMode==='basico');
+  document.getElementById('cit-t').classList.toggle('active', ciMode==='tecnico');
+  document.getElementById('mb-b').classList.toggle('active', ciMode==='basico');
+  document.getElementById('mb-t').classList.toggle('active', ciMode==='tecnico');
+  const desc = ciMode==='basico' ? ciCurrent.basico : ciCurrent.tecnico;
+  const specsHTML = (ciCurrent.specs||[]).map(s=>`<div class="ci-spec"><div class="ci-spec-l">${s.l}</div><div class="ci-spec-v">${s.v}</div></div>`).join('');
+  document.getElementById('ciBody').innerHTML = `
+    <div class="ci-sec"><div class="ci-sec-title">¿Qué hace?</div><div class="ci-desc">${desc}</div></div>
+    ${specsHTML?`<div class="ci-sec"><div class="ci-sec-title">Valores de referencia</div><div class="ci-specs">${specsHTML}</div></div>`:''}
+    <div class="ci-sec"><div class="ci-sec-title">📍 Dónde está</div><div class="ci-loc-box">${ciCurrent.ubicacion}</div></div>
+    ${ciMode==='tecnico'?`<div class="ci-sec"><div class="ci-sec-title">🎯 Calibración</div><div class="ci-cal-box">${ciCurrent.cal}</div><div class="ci-maint-box">🔧 ${ciCurrent.mant}</div></div>`:''}
+    <button class="ci-ask" onclick="askAboutComp()">Consultar con IA ↗</button>
+  `;
+}
+
+function askAboutComp() {
+  if(!ciCurrent) return;
+  closeCiPanel();
+  switchTab('chat');
+  document.getElementById('inp').value = `Tengo un problema con el componente ${ciCurrent.name} (${ciCurrent.tipo}). ¿Me guiás en el diagnóstico?`;
+  autoResize(document.getElementById('inp'));
+  document.getElementById('inp').focus();
+}
+
+function closeCiPanel() {
+  document.getElementById('ciPanel').classList.remove('on');
+  document.getElementById('ciOverlay').classList.remove('on');
+}
+
+function setInterMode(mode) {
+  ciMode = mode;
+  document.getElementById('mb-b').classList.toggle('active', mode==='basico');
+  document.getElementById('mb-t').classList.toggle('active', mode==='tecnico');
+  document.getElementById('cit-b').classList.toggle('active', mode==='basico');
+  document.getElementById('cit-t').classList.toggle('active', mode==='tecnico');
+  if(ciCurrent) renderCiPanel();
+}
+
+// Inicializar grid al cargar
+document.addEventListener('DOMContentLoaded', renderCiGrid);
+</script>
+
+
+<script>
+// ══════════════════════════════════════════════════════
+// DATOS DE VÁLVULAS
+// ══════════════════════════════════════════════════════
+const VALVULAS = [
+  {id:'V-ENT',nombre:'Electroválvula de entrada de agua',tipo:'NC — Normalmente Cerrada',tension:'24V DC',bobina:'~150 Ω',
+   modos:['Rinse','Tratamiento','Desinfección'],
+   falla_cerrada:'No entra agua. Conductividad baja. La máquina no puede llenar el circuito.',
+   falla_abierta:'Agua entra sin control. Puede generar alarma de presión de entrada.',
+   ubicacion:'Panel trasero inferior. Primera válvula en la línea de entrada de agua tratada.',
+   test:'Menú Servicio → Test Válvulas → V-ENT. Escuchar clic. Sin clic → verificar 24V en bobina.'},
+  {id:'V-BYP',nombre:'Válvula de bypass (desvío al paciente)',tipo:'NA — Normalmente Abierta al BYPASS',tension:'24V DC',bobina:'~120 Ω',
+   modos:['Energizada en tratamiento → dializante va al dializador','Sin energía → bypass automático (seguridad)'],
+   falla_cerrada:'Dializante no llega al dializador. No hay diálisis posible.',
+   falla_abierta:'El dializante nunca llega al paciente aunque no haya alarma. CRÍTICO.',
+   ubicacion:'Módulo hidráulico central. Punto de bifurcación entre el dializador y el bypass.',
+   test:'Menú Servicio → Test Válvulas → V-BYP. Verificar que entre/salga del bypass correctamente.'},
+  {id:'V-DRN',nombre:'Válvula de drenaje',tipo:'NC — Normalmente Cerrada',tension:'24V DC',bobina:'~150 Ω',
+   modos:['Drenaje','Rinse final','Desinfección'],
+   falla_cerrada:'El dializante no puede drenar. Máquina queda sin poder renovar el líquido.',
+   falla_abierta:'Dializante drena durante el tratamiento. UF descontrolada. Alarma de balance.',
+   ubicacion:'Módulo hidráulico inferior. Tubería de salida hacia el desagüe/cloaca.',
+   test:'Menú Servicio → Test Válvulas → V-DRN.'},
+  {id:'V-DES',nombre:'Válvula de entrada de desinfectante',tipo:'NC — Normalmente Cerrada',tension:'24V DC',bobina:'~150 Ω',
+   modos:['Solo durante el ciclo de desinfección química'],
+   falla_cerrada:'El desinfectante no entra. El ciclo de desinfección falla.',
+   falla_abierta:'El desinfectante entra durante el tratamiento. PELIGRO PARA EL PACIENTE.',
+   ubicacion:'Panel hidráulico. Conexión a la línea de desinfectante (ácido peracético o similar).',
+   test:'Menú Servicio → Test Válvulas → V-DES. Solo activar con desinfectante conectado en modo desinfección.'},
+  {id:'V-RIN',nombre:'Válvula de rinse / enjuague',tipo:'NC — Normalmente Cerrada',tension:'24V DC',bobina:'~150 Ω',
+   modos:['Ciclo de rinse pre-tratamiento','Rinse post-desinfección'],
+   falla_cerrada:'El circuito no puede enjuagarse. Residuos de desinfectante pueden quedar.',
+   falla_abierta:'Enjuague continuo. Puede diluir el dializante durante el tratamiento.',
+   ubicacion:'Módulo hidráulico. En la línea del circuito de rinse.',
+   test:'Menú Servicio → Test Válvulas → V-RIN.'},
+  {id:'V-B1A',nombre:'Válvula balanza cámara 1 — entrada',tipo:'Membrana NC',tension:'24V DC',bobina:'~130 Ω',
+   modos:['Tratamiento: alternancia cíclica con V-B1B para control de UF'],
+   falla_cerrada:'La cámara 1 no se llena. Error de balance. Alarma UF.',
+   falla_abierta:'Cámara no sella. Error de balance acumulativo.',
+   ubicacion:'Módulo de balance hidráulico. Cámara de balance 1, válvula de admisión.',
+   test:'Test de balance: Menú Servicio → Calibración UF → observar comportamiento de cámaras.'},
+  {id:'V-B1B',nombre:'Válvula balanza cámara 1 — salida',tipo:'Membrana NC',tension:'24V DC',bobina:'~130 Ω',
+   modos:['Sincronizada con V-B1A: cuando una abre la otra cierra'],
+   falla_cerrada:'La cámara 1 no vacía. Error de balance.',
+   falla_abierta:'Cámara no retiene. Error de balance acumulativo.',
+   ubicacion:'Módulo de balance hidráulico. Cámara de balance 1, válvula de salida.',
+   test:'Igual que V-B1A.'},
+  {id:'V-B2A',nombre:'Válvula balanza cámara 2 — entrada',tipo:'Membrana NC',tension:'24V DC',bobina:'~130 Ω',
+   modos:['Trabaja en contrafase con V-B1A: cuando B1 llena, B2 vacía y viceversa'],
+   falla_cerrada:'Error de balance. Alarma UF.',
+   falla_abierta:'Error de balance acumulativo.',
+   ubicacion:'Módulo de balance hidráulico. Cámara de balance 2, válvula de admisión.',
+   test:'Test de balance completo en Menú Servicio.'},
+  {id:'V-B2B',nombre:'Válvula balanza cámara 2 — salida',tipo:'Membrana NC',tension:'24V DC',bobina:'~130 Ω',
+   modos:['Sincronizada con V-B2A'],
+   falla_cerrada:'Error de balance.',
+   falla_abierta:'Error de balance acumulativo.',
+   ubicacion:'Módulo de balance hidráulico. Cámara de balance 2, válvula de salida.',
+   test:'Test de balance completo en Menú Servicio.'},
+  {id:'V-UF',nombre:'Válvula de ultrafiltración',tipo:'NC controlada por software UF',tension:'24V DC',bobina:'~140 Ω',
+   modos:['Tratamiento: apertura proporcional al UF rate programado'],
+   falla_cerrada:'No hay extracción de líquido del paciente. UF = 0.',
+   falla_abierta:'UF máxima. Se extrae demasiado líquido. PELIGRO para el paciente.',
+   ubicacion:'Módulo de UF/balanza. Controla el flujo de salida del lado dializado.',
+   test:'Reducir UF rate a 0: la válvula debe cerrarse. Aumentar: debe abrirse proporcionalmente.'},
+  {id:'V-VAC',nombre:'Válvula de vacío del degassing',tipo:'NC en circuito de vacío',tension:'24V DC',bobina:'~120 Ω',
+   modos:['Siempre que la máquina esté encendida y en operación'],
+   falla_cerrada:'No se mantiene el vacío. Degassing ineficiente. Conductividad fluctuante.',
+   falla_abierta:'Se pierde el vacío. Misma consecuencia.',
+   ubicacion:'Circuito de vacío entre la bomba P4 y el módulo DG.',
+   test:'Medir presión de vacío con manómetro: debe estar en 600–760 mmHg.'},
+  {id:'V-TEMP',nombre:'Válvula de control de temperatura',tipo:'Proporcional o On/Off',tension:'24V DC o proporcional',bobina:'Variable',
+   modos:['Tratamiento: mezcla agua caliente/fría para mantener 37°C'],
+   falla_cerrada:'Solo agua fría llega al calentador. Temperatura baja.',
+   falla_abierta:'Temperatura descontrolada. Puede sobrecalentar.',
+   ubicacion:'En algunos modelos: válvula proporcional en el circuito de temperatura antes del calentador.',
+   test:'Verificar temperatura con termómetro externo vs la mostrada en pantalla.'},
+  {id:'V-CON',nombre:'Válvula de concentrado ácido (complementaria)',tipo:'NC — check valve + solenoide',tension:'24V DC',bobina:'~150 Ω',
+   modos:['Tratamiento: abre para permitir aspiración por bomba P2'],
+   falla_cerrada:'No aspira concentrado. Conductividad baja.',
+   falla_abierta:'Concentrado fluye sin control. Conductividad alta.',
+   ubicacion:'Línea de concentrado entre el bidón y la bomba P2.',
+   test:'Verificar steps de P2 y conductividad resultante.'},
+  {id:'V-BIC',nombre:'Válvula de bicarbonato (complementaria)',tipo:'NC — check valve + solenoide',tension:'24V DC',bobina:'~150 Ω',
+   modos:['Tratamiento: abre para permitir aspiración por bomba P3'],
+   falla_cerrada:'No aspira bicarbonato. Conductividad de bicarb baja.',
+   falla_abierta:'Bicarbonato fluye sin control. Conductividad alta.',
+   ubicacion:'Línea de bicarbonato entre el cartucho y la bomba P3.',
+   test:'Verificar steps de P3 y conductividad de bicarbonato.'},
+  {id:'V-HEP',nombre:'Válvula check de heparina',tipo:'Válvula antirretorno (no solenoide)',tension:'N/A (mecánica)',bobina:'N/A',
+   modos:['Siempre activa: impide que la sangre refluya hacia la jeringa de heparina'],
+   falla_cerrada:'La heparina no puede infundirse. TMP sube prematuramente.',
+   falla_abierta:'La sangre puede contaminar la jeringa de heparina.',
+   ubicacion:'Línea de heparina, entre la bomba HP y la línea de sangre arterial post-bomba.',
+   test:'Verificar que no haya sangre en la línea de heparina al desconectar.'}
+];
+
+function renderValvulas() {
+  const el = document.getElementById('valvList');
+  if(!el) return;
+  el.innerHTML = VALVULAS.map((v,i) => `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:8px;overflow:hidden">
+      <div onclick="this.parentElement.classList.toggle('open')" style="display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;background:var(--s2)">
+        <span style="font-size:11px;font-weight:700;padding:3px 8px;background:var(--accent-l);color:var(--accent-t);border-radius:6px;white-space:nowrap">${v.id}</span>
+        <span style="font-size:13px;font-weight:600;flex:1;line-height:1.3">${v.nombre}</span>
+        <span style="font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px;background:${v.tipo.includes('NA')?'var(--warn-l)':'var(--ok-l)'};color:${v.tipo.includes('NA')?'var(--warn)':'var(--ok)'};white-space:nowrap">${v.tipo.split('—')[0].trim()}</span>
+        <span style="font-size:13px;color:var(--t3)">▾</span>
+      </div>
+      <div style="display:none;padding:10px 12px 12px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px">
+          <div style="background:var(--s2);border-radius:8px;padding:6px 8px;border:1px solid var(--border)"><div style="font-size:10px;color:var(--t3)">Tipo</div><div style="font-size:12px;font-weight:700;color:var(--accent-t)">${v.tipo}</div></div>
+          <div style="background:var(--s2);border-radius:8px;padding:6px 8px;border:1px solid var(--border)"><div style="font-size:10px;color:var(--t3)">Tensión / Bobina</div><div style="font-size:12px;font-weight:700;color:var(--accent-t)">${v.tension} · ${v.bobina}</div></div>
+        </div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--t3);margin-bottom:4px">Modos activos</div>
+        <ul style="padding-left:16px;margin-bottom:8px">${v.modos.map(m=>`<li style="font-size:12px;color:var(--t2);margin-bottom:2px">${m}</li>`).join('')}</ul>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--t3);margin-bottom:4px">Si falla cerrada</div>
+        <div style="font-size:12px;color:var(--t2);background:var(--err-l);border-radius:8px;padding:6px 10px;margin-bottom:6px">${v.falla_cerrada}</div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--t3);margin-bottom:4px">Si falla abierta</div>
+        <div style="font-size:12px;color:var(--t2);background:var(--warn-l);border-radius:8px;padding:6px 10px;margin-bottom:8px">${v.falla_abierta}</div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--t3);margin-bottom:4px">📍 Ubicación</div>
+        <div style="font-size:12px;color:var(--t2);margin-bottom:8px">${v.ubicacion}</div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--t3);margin-bottom:4px">🎯 Cómo testearla</div>
+        <div style="font-size:12px;color:var(--t2);background:var(--ok-l);border-left:3px solid var(--ok);border-radius:0 8px 8px 0;padding:6px 10px">${v.test}</div>
+      </div>
+    </div>`).join('');
+  el.querySelectorAll('[onclick]').forEach(h=>{
+    h.addEventListener('click',()=>{
+      const body = h.nextElementSibling;
+      body.style.display = body.style.display==='none'?'block':'none';
+    });
+  });
+}
+
+// ══════════════════════════════════════════════════════
+// ÁRBOL DEL MENÚ DE CALIBRACIÓN
+// ══════════════════════════════════════════════════════
+const MENU_TREE = [
+  {cat:'📊 Calibraciones',color:'var(--accent)',items:[
+    {name:'Conductividad',desc:'Ajustar el offset de la célula de conductividad. Requiere conductímetro externo. ⚠️ Al aplicar el nuevo offset, el valor anterior se pierde.'},
+    {name:'Temperatura',desc:'Ajustar el offset del PT1000. Requiere termómetro de referencia. ⚠️ El valor anterior se reemplaza.'},
+    {name:'Zero presión arterial (PA)',desc:'Resetea el cero del transductor PA. ⚠️ Hacerlo siempre con la línea clampada y cápsula nueva. Zero incorrecto = lecturas desviadas en toda la sesión.'},
+    {name:'Zero presión venosa (PV)',desc:'Resetea el cero del transductor PV. ⚠️ Mismas condiciones que PA. Si hacés el zero con presión residual, esa presión queda incorporada como "cero" y NO podés saberlo desde la pantalla.'},
+    {name:'Calibración bomba de sangre',desc:'Ajusta los pasos/revolución de la bomba. Requiere probeta + cronómetro. Verificar a varios flujos (200, 300, 400 mL/min).'},
+    {name:'Calibración UF / Balanza',desc:'Ajusta el sistema de balance hídrico. Requiere recipientes de volumen conocido + balanza. ⚠️ Un error aquí afecta directamente el volumen extraído al paciente.'},
+    {name:'Bomba de heparina',desc:'Verifica que el flujo de infusión sea el correcto para la jeringa configurada.'},
+    {name:'Calibración flujo dializante',desc:'Ajusta el encoder de la bomba de dializante. Medir volumétricamente.'}
+  ]},
+  {cat:'🔧 Tests de hardware',color:'var(--ok)',items:[
+    {name:'Test de electroválvulas',desc:'Activa individualmente cada válvula. Escuchar el clic de apertura y verificar el cambio de estado en el circuito.'},
+    {name:'Test de bombas',desc:'Activa individualmente cada bomba para verificar funcionamiento mecánico.'},
+    {name:'Test de sensores',desc:'Muestra los valores crudos (ADC) de todos los sensores. Útil para detectar sensores defectuosos.'},
+    {name:'Test del calentador',desc:'Activa el calentador y monitorea la curva de temperatura vs tiempo.'},
+    {name:'Test de degassing',desc:'Muestra la presión de vacío alcanzada por la bomba P4.'}
+  ]},
+  {cat:'⚙️ Parámetros del sistema',color:'var(--warn)',items:[
+    {name:'Límites de alarma',desc:'Ajustar los umbrales de alarma de presión, conductividad, temperatura. ⚠️ No modificar sin autorización del fabricante o bioingeniería.'},
+    {name:'Configuración de red',desc:'Parámetros de conectividad (si aplica al modelo).'},
+    {name:'Parámetros de la máquina',desc:'Configuración de flujos nominales, tiempos de ciclo, etc.'}
+  ]},
+  {cat:'📋 Registros y estadísticas',color:'var(--purple)',items:[
+    {name:'Log de errores / alarmas',desc:'Historial de errores del sistema con fecha y hora. Fundamental para el diagnóstico de fallas intermitentes.'},
+    {name:'Estadísticas de uso',desc:'Horas de operación, número de sesiones, horas de bomba de sangre.'},
+    {name:'Log de calibraciones',desc:'Historial de calibraciones realizadas con los valores anteriores y nuevos.'}
+  ]}
+];
+
+function renderMenuTree() {
+  const el = document.getElementById('menuTree');
+  if(!el) return;
+  el.innerHTML = MENU_TREE.map(cat=>`
+    <div style="margin-bottom:12px">
+      <div style="font-size:13px;font-weight:700;color:${cat.color};margin-bottom:6px;padding:6px 10px;background:var(--s2);border-radius:8px">${cat.cat}</div>
+      ${cat.items.map(item=>`
+        <div style="display:flex;gap:8px;padding:7px 10px;border-bottom:1px solid var(--border);align-items:flex-start">
+          <div style="flex-shrink:0;width:6px;height:6px;border-radius:50%;background:${cat.color};margin-top:5px"></div>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--text)">${item.name}</div>
+            <div style="font-size:12px;color:var(--t2);margin-top:2px;line-height:1.5">${item.desc}</div>
+          </div>
+        </div>`).join('')}
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════════════════
+// CONEXIÓN AL PACIENTE
+// ══════════════════════════════════════════════════════
+let cxMode = 'fistula';
+const CX = {
+  fistula: {
+    checklist: ['Máquina en estado READY (rinse completado, sin alarmas)','Conductividad y temperatura en rango','Líneas y dializador cebados con 500–1000 mL de suero','Bomba de heparina cargada y configurada','Jeringa de heparina: tamaño configurado = tamaño real','Alarmas de PA, PV y TMP en rangos correctos','Preparar campo estéril en el acceso vascular'],
+    pasos: [
+      {n:'1',titulo:'Bolo de heparina inicial',desc:'Administrar el bolo de heparina sistémica prescripto por el médico. Esperar 3–5 minutos antes de puncionar.'},
+      {n:'2',titulo:'Punción arterial (aguja gruesa, bisel hacia arriba)',desc:'Puncionar el acceso arterial en dirección contraria al flujo sanguíneo (hacia el corazón). Verificar retorno sanguíneo. Fijar la aguja con cinta.'},
+      {n:'3',titulo:'Conexión de la línea arterial',desc:'Conectar la línea arterial a la aguja arterial con técnica aséptica. Clampear la línea antes de conectar para evitar sifón. Iniciar la bomba de sangre a flujo bajo (80–100 mL/min).'},
+      {n:'4',titulo:'Cebado arterial',desc:'Dejar avanzar la sangre desplazando el suero de cebado hacia el colector de desechos. Observar que no haya burbujas en la línea arterial.'},
+      {n:'5',titulo:'Punción venosa',desc:'Puncionar el acceso venoso en dirección del flujo sanguíneo (hacia la fístula). Verificar retorno. Fijar la aguja.'},
+      {n:'6',titulo:'Conexión de la línea venosa',desc:'Conectar la línea venosa a la aguja venosa. Verificar que el detector de burbujas esté correctamente posicionado y la trampa de aire a 2/3 de nivel.'},
+      {n:'7',titulo:'Iniciar tratamiento',desc:'Aumentar el flujo de sangre gradualmente hasta el objetivo prescripto (ej: 300 mL/min de a 50 en 50). Activar la heparina continua. Verificar PA, PV, TMP en los primeros 5 minutos.'},
+      {n:'8',titulo:'Monitoreo inicial',desc:'Verificar que todas las presiones estén en rango, que no haya alarmas y que el paciente esté bien. Ajustar alarmas si el acceso es conocido.'}
+    ],
+    emergencia: 'Si hay ALARMA GRAVE durante la conexión: clampear la línea venosa primero, luego arterial. NUNCA clampear solo la línea arterial con la bomba andando (riesgo de hemólisis).'
+  },
+  cateter: {
+    checklist: ['Máquina en estado READY (rinse completado, sin alarmas)','Conductividad y temperatura en rango','Líneas y dializador cebados','Bomba de heparina cargada','Material de curación estéril preparado','Máscara puesta (el paciente también)','Verificar permeabilidad del catéter (no conectar sin verificar primero)'],
+    pasos: [
+      {n:'1',titulo:'Verificar permeabilidad del catéter',desc:'Con jeringas de 10 mL: aspirar de cada lumen (arterial y venoso). Debe haber retorno sanguíneo fácil. Si hay resistencia: aplicar la dosis de heparina en el lumen, esperar 2 min y reintentar. Si persiste: consultar.'},
+      {n:'2',titulo:'Aspirar el sello de heparina',desc:'Aspirar el volumen muerto del lumen (generalmente 1.0–1.5 mL) y descartar. Este volumen contiene la heparina concentrada del sello de la sesión anterior.'},
+      {n:'3',titulo:'Conexión arterial del catéter',desc:'Conectar la línea arterial al lumen arterial del catéter (generalmente rojo). Clampear el catéter antes de conectar. Verificar que no haya burbujas en la conexión.'},
+      {n:'4',titulo:'Iniciar bomba de sangre a flujo bajo',desc:'Iniciar la bomba a 100 mL/min. Verificar que la PA esté en rango aceptable (no más negativa de -200 mmHg a ese flujo). Si es más negativa: hay obstrucción o el lumen está contra la pared vascular.'},
+      {n:'5',titulo:'Conexión venosa del catéter',desc:'Conectar la línea venosa al lumen venoso (generalmente azul). Clampear el catéter antes de conectar. Verificar que no haya entrada de aire.'},
+      {n:'6',titulo:'Aumentar flujo gradualmente',desc:'Subir el flujo de a 50 mL/min hasta el objetivo. Los catéteres suelen permitir menos flujo que las fístulas (generalmente máx. 350 mL/min). Verificar PA continuamente.'},
+      {n:'7',titulo:'Activar heparina continua e iniciar UF',desc:'Activar la bomba de heparina. Verificar que el UF rate sea el prescripto. Control de PA, PV y TMP cada 15 minutos.'},
+      {n:'8',titulo:'Cierre del catéter al terminar',desc:'Al finalizar: clampear línea venosa primero, luego arterial. Desconectar con técnica aséptica. Sellar cada lumen con dosis de heparina prescripta (generalmente 1000–5000 UI en 1–1.5 mL). Nunca dejar el catéter sin sello.'}
+    ],
+    emergencia: 'Si el catéter pierde continuidad (desconexión accidental): clampear INMEDIATAMENTE el catéter con el clamp de emergencia que debe estar siempre disponible junto al paciente. El riesgo es embolia aérea masiva.'
+  }
+};
+
+function setCxMode(mode) {
+  cxMode = mode;
+  document.getElementById('cx-fis').classList.toggle('active', mode==='fistula');
+  document.getElementById('cx-cat').classList.toggle('active', mode==='cateter');
+  renderCxContent();
+}
+function renderCxContent() {
+  const el = document.getElementById('cxContent');
+  if(!el) return;
+  const d = CX[cxMode];
+  el.innerHTML = `
+    <div style="background:var(--accent-l);border-radius:10px;padding:10px 12px;margin-bottom:12px">
+      <div style="font-size:11px;font-weight:700;color:var(--accent-t);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">✅ Checklist previo — verificar ANTES de conectar</div>
+      ${d.checklist.map(c=>`<div style="display:flex;gap:8px;font-size:13px;color:var(--t2);margin-bottom:5px;align-items:flex-start"><span style="color:var(--ok);font-weight:700;flex-shrink:0">✓</span>${c}</div>`).join('')}
+    </div>
+    ${d.pasos.map(p=>`
+      <div style="display:flex;gap:10px;margin-bottom:10px;align-items:flex-start">
+        <div style="width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px">${p.n}</div>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--text)">${p.titulo}</div>
+          <div style="font-size:13px;color:var(--t2);line-height:1.55;margin-top:2px">${p.desc}</div>
+        </div>
+      </div>`).join('')}
+    <div style="margin-top:12px;padding:10px 12px;background:var(--err-l);border-left:3px solid var(--err);border-radius:0 10px 10px 0;font-size:13px;color:var(--t2)">
+      🚨 <strong>Emergencia:</strong> ${d.emergencia}
+    </div>`;
+}
+
+// ══════════════════════════════════════════════════════
+// CIRCUITOS COMPLETOS
+// ══════════════════════════════════════════════════════
+let circMode = 'agua';
+const CIRC = {
+  agua: {
+    titulo:'💧 Circuito del agua y dializante',
+    etapas:[
+      {icon:'🏭',color:'#BEE3F8',titulo:'1. Agua tratada entra',desc:'El agua pasa por la planta de tratamiento (osmosis inversa + suavizador + carbón activado) antes de llegar a la máquina. La resistividad debe ser >1 MΩ·cm y el TOC <0.5 mg/L. La máquina mide la presión de entrada (1.5–3 bar). La V-ENT (electroválvula de entrada) abre al iniciar cualquier modo operativo.'},
+      {icon:'🧪',color:'#C6F6D5',titulo:'2. Mezcla con concentrado',desc:'Las bombas P2 (concentrado ácido) y P3 (bicarbonato) dosifican los concentrados en proporciones exactas. La mezcla es aproximadamente: 97% agua + 1.9% concentrado ácido + 1.1% bicarbonato. Los steps de las bombas determinan exactamente cuánto concentrado se agrega. La célula de conductividad CC verifica que la mezcla sea correcta.'},
+      {icon:'💨',color:'#E9D8FD',titulo:'3. Desgasificación',desc:'El dializante pasa por el módulo DG donde la bomba de vacío P4 extrae el CO₂ disuelto y otras burbujas a 600–760 mmHg de vacío. Si se saltea este paso, el dializante llega con burbujas al dializador, interfiriendo con la diálisis y haciendo fluctuar la conductividad.'},
+      {icon:'🔥',color:'#FEEBC8',titulo:'4. Calentamiento',desc:'El calentador HT lleva el dializante a 37°C (ajustable). El PT1000 mide la temperatura. La conductividad se corrige automáticamente por temperatura (a mayor temperatura, mayor conductividad). Por eso un sensor de temperatura defectuoso también desviará la lectura de conductividad.'},
+      {icon:'📊',color:'#BEE3F8',titulo:'5. Medición y control final',desc:'La célula de conductividad CC hace la medición definitiva. La válvula V-BYP decide: si todo está en rango → dializante va al dializador. Si hay alguna alarma → bypass automático, el dializante va directo al drenaje sin pasar por el paciente.'},
+      {icon:'🔬',color:'#FED7D7',titulo:'6. A través del dializador',desc:'El dializante entra al dializador por el lado opuesto a la sangre (contracorriente). La membrana semipermeable separa ambos circuitos. Las toxinas y el exceso de agua del paciente pasan de la sangre al dializante por difusión y convección. El dializante se carga de toxinas y urea.'},
+      {icon:'⚖️',color:'#C6F6D5',titulo:'7. Control de ultrafiltración',desc:'El sistema de balanza (V-B1A, V-B1B, V-B2A, V-B2B) controla exactamente cuánto líquido se extrae del paciente. Las cámaras de balance se llenan y vacían alternadamente, garantizando que la diferencia entre lo que entra y sale del dializador sea exactamente el UF programado.'},
+      {icon:'🚰',color:'#EDF2F7',titulo:'8. Drenaje — agua sucia',desc:'El dializante "sucio" (cargado de toxinas, urea, creatinina y el exceso de agua del paciente) sale del dializador y va directo al drenaje. La V-DRN (válvula de drenaje) se abre en los modos correspondientes. El detector de hemoglobina BLD verifica que no haya sangre en este dializante antes del drenaje.'}
+    ]
+  },
+  sangre: {
+    titulo:'🩸 Circuito extracorpóreo de sangre',
+    etapas:[
+      {icon:'💉',color:'#FED7D7',titulo:'1. Extracción arterial',desc:'La sangre sale del paciente por el acceso vascular (fístula arteriovenosa o catéter venoso central). La línea arterial lleva la sangre hacia la máquina. La presión arterial (PA) mide qué tan difícil está trabajando la bomba para aspirar la sangre. Valores normales: -50 a -200 mmHg.'},
+      {icon:'❤️',color:'#FED7D7',titulo:'2. Bomba peristáltica (P5)',desc:'La bomba de sangre P5 impulsa la sangre a través del circuito. Es el "corazón artificial" durante la sesión. Flujo típico: 250–350 mL/min. Los rodillos comprimen la línea de silicona para mover la sangre sin contacto directo. La oclusión correcta evita la hemólisis.'},
+      {icon:'💉',color:'#FEEBC8',titulo:'3. Infusión de heparina',desc:'Justo después de la bomba de sangre, la bomba de heparina HP infunde la heparina continua. La heparina evita que la sangre se coagule en el circuito extracorpóreo. La válvula check evita el reflujo de sangre hacia la jeringa.'},
+      {icon:'🔬',color:'#FED7D7',titulo:'4. Dializador — el filtro',desc:'La sangre entra al dializador por el extremo superior (o inferior según el modelo). Fluye por los miles de capilares de la membrana (fibra hueca) a contracorriente del dializante. Las toxinas pequeñas (urea, creatinina, fosfatos) difunden hacia el dializante. El agua excedente es empujada por convección (ultrafiltración). La sangre sale más limpia y con menos volumen.'},
+      {icon:'📊',color:'#FED7D7',titulo:'5. Medición de TMP',desc:'La presión transmembrana (TMP) es la diferencia de presión entre el lado sangre y el lado dializante en el dializador. TMP normal: 0–200 mmHg en reposo, puede llegar a 350 mmHg. TMP alta progresiva = el dializador se está coagulando. TMP alta desde el inicio = UF rate muy alto para esa membrana.'},
+      {icon:'🫁',color:'#FED7D7',titulo:'6. Trampa de aire (TR)',desc:'La sangre sale del dializador hacia la trampa de aire venosa. Esta cámara atrapa cualquier micro-burbuja que pueda haberse formado. El nivel a 2/3 garantiza espacio de amortiguamiento. El filtro de malla (200μm) retiene micro-coágulos.'},
+      {icon:'📡',color:'#FED7D7',titulo:'7. Detector de burbujas (DB)',desc:'El detector ultrasónico escanea la línea venosa buscando burbujas. Si detecta aire: para la bomba de sangre inmediatamente y activa la alarma de bypass venoso (pinza automática). Nunca continuar sin verificar la causa de la alarma.'},
+      {icon:'💉',color:'#C6F6D5',titulo:'8. Retorno venoso al paciente',desc:'La sangre ya tratada vuelve al paciente por la línea venosa. La presión venosa (PV) mide la resistencia al retorno. Valores normales: 50–200 mmHg. Si sube: posible obstrucción en la línea, aguja venosa, o en la vena del paciente.'}
+    ]
+  },
+  emergencia: {
+    titulo:'🚨 Procedimientos de emergencia',
+    etapas:[
+      {icon:'⚡',color:'#FED7D7',titulo:'Pérdida de conciencia del paciente',desc:'1) Llamar inmediatamente al personal médico. 2) Reducir el flujo de sangre a 100 mL/min. 3) Poner al paciente en posición de Trendelenburg (pies arriba). 4) Verificar PA del paciente. 5) NO desconectar el circuito hasta que llegue el médico. 6) Preparar suero fisiológico 500 mL para infusión rápida si hay hipotensión.'},
+      {icon:'💨',color:'#FED7D7',titulo:'Alarma de aire — sospecha de embolia',desc:'1) Clampear la línea venosa INMEDIATAMENTE. 2) Detener la bomba de sangre. 3) Clampear también la línea arterial. 4) Llamar al médico urgente. 5) Poner al paciente en decúbito lateral izquierdo con pies elevados (posición de Durant) para atrapar el aire en el ventrículo derecho. 6) Oxígeno al 100% si está disponible.'},
+      {icon:'🩸',color:'#FED7D7',titulo:'Desconexión accidental de la línea',desc:'1) Clampear inmediatamente el extremo suelto de la línea. 2) Aplicar presión en la aguja o catéter. 3) Si hay sangrado activo: comprimir con gasas estériles. 4) NO intentar reconectar sin verificar que no haya entrada de aire. 5) Llamar al médico. 6) El circuito puede estar contaminado: evaluar si continuar o terminar la sesión.'},
+      {icon:'🔴',color:'#FED7D7',titulo:'Blood leak — confirmación y acción',desc:'1) La máquina entra en bypass automáticamente. 2) NUNCA retornar la sangre al paciente sin confirmar que la alarma es real. 3) Tomar muestra del dializante de la salida: si hay color rosado/rojo = ruptura de membrana REAL. 4) Si es real: terminar la sesión sin retornar sangre del circuito afectado. 5) Si es falsa alarma (detector sucio): limpiar sensor, verificar que el dializante esté transparente y reiniciar.'},
+      {icon:'⚡',color:'#FED7D7',titulo:'Corte de luz durante el tratamiento',desc:'1) La bomba de sangre se detiene automáticamente (protección). 2) Clampear la línea venosa inmediatamente al notar la parada. 3) Si hay UPS: la máquina puede continuar por tiempo limitado. 4) Si no hay UPS: desconectar el circuito manualmente siguiendo el protocolo de desconexión de emergencia. 5) Tener siempre a mano jeringas y suero para retorno manual de la sangre.'},
+      {icon:'🌡️',color:'#FEEBC8',titulo:'Temperatura fuera de rango — alta',desc:'1) La máquina entra en bypass automáticamente. 2) Verificar con termómetro externo si la temperatura es realmente alta. 3) Si es real: apagar el calentador desde el menú de servicio, esperar que baje. 4) Si es falsa alarma (PT1000 defectuoso): el técnico puede ajustar el offset temporalmente para completar la sesión, pero el sensor debe reemplazarse antes de la próxima.'},
+      {icon:'📊',color:'#FEEBC8',titulo:'Conductividad fuera de rango',desc:'1) La máquina entra en bypass automáticamente (el dializante no llega al paciente). 2) Verificar con conductímetro externo si la conductividad real está mal. 3) Si el error es de sensor (conductímetro externo da valor normal): puede ser célula sucia → descalcificar. 4) Si la conductividad real está mal: verificar concentrado (bidón vacío, línea obstruida). 5) No forzar el bypass manual hasta identificar la causa.'},
+      {icon:'🔧',color:'#EDF2F7',titulo:'Máquina se apaga sola durante tratamiento',desc:'1) Clampear línea venosa y arterial. 2) Llamar al técnico. 3) Retorno manual de la sangre: pinchar el segmento de la línea con jeringa (según protocolo de la institución) o usar suero fisiológico para desplazar la sangre hacia el paciente. 4) No dejar la sangre en el circuito más de 15 minutos sin circulación (riesgo de coagulación).'}
+    ]
+  }
+};
+
+function setCircMode(mode) {
+  circMode = mode;
+  ['agua','sangre','emergencia'].forEach(m=>{
+    const el = document.getElementById('circ-'+m.substring(0,2));
+    if(el) el.classList.toggle('active', m===mode);
+  });
+  renderCircContent();
+}
+function renderCircContent() {
+  const el = document.getElementById('circContent');
+  if(!el) return;
+  const d = CIRC[circMode];
+  el.innerHTML = `<p style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">${d.titulo}</p>` +
+    d.etapas.map(e=>`
+      <div style="display:flex;gap:10px;margin-bottom:12px;align-items:flex-start">
+        <div style="width:36px;height:36px;border-radius:10px;background:${e.color};display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${e.icon}</div>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--text)">${e.titulo}</div>
+          <div style="font-size:12px;color:var(--t2);line-height:1.6;margin-top:3px">${e.desc}</div>
+        </div>
+      </div>`).join('');
+}
+
+// ── Init todas las secciones ──
+document.addEventListener('DOMContentLoaded', function() {
+  renderCiGrid();
+  renderValvulas();
+  renderMenuTree();
+  renderCxContent();
+  renderCircContent();
+});
+</script>
+
 </body>
 </html>
