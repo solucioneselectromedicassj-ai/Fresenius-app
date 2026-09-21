@@ -288,6 +288,7 @@ textarea:focus{outline:none;border-color:var(--accent);background:var(--surface)
     </svg>
     Fre<span>Dx</span>
   </a>
+  <span style="font-size:10px;color:var(--t3);font-weight:600;letter-spacing:.5px;flex-shrink:0">v2.5</span>
   <select class="model-sel" id="modelSel">
     <option>Fresenius 4008S</option>
     <option>Fresenius 4008H</option>
@@ -342,6 +343,8 @@ textarea:focus{outline:none;border-color:var(--accent);background:var(--surface)
     </div>
   </div>
   <div class="settings-note">🔒 Claves guardadas solo en tu navegador. Sin clave el chat no funciona, pero la Base de Fallas sí — incluso sin internet.<br>⚡ <strong>Groq y Gemini son gratuitos</strong> — registrarse y crear clave es suficiente, sin tarjeta.</div>
+  <button onclick="testGroq()" style="padding:8px 16px;background:var(--s3);border:1px solid var(--border2);border-radius:var(--radius);font-size:12px;font-weight:600;cursor:pointer;color:var(--text)">🔍 Probar conexión Groq</button>
+  <div id="groqTestResult" style="display:none;font-size:12px;padding:8px 10px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface);font-family:monospace;white-space:pre-wrap;word-break:break-all"></div>
   <button class="btn-save" onclick="saveKeys()">✓ Guardar y cerrar</button>
 </div>
 
@@ -1029,6 +1032,33 @@ function saveKeys() {
   addBubble('ai', 'Claves guardadas. Todo listo para diagnosticar.');
 }
 
+async function testGroq() {
+  const key = document.getElementById('groqKey').value.trim() || localStorage.getItem('fredx_groq_key') || '';
+  const box = document.getElementById('groqTestResult');
+  box.style.display = 'block';
+  box.style.color = 'var(--text)';
+  box.textContent = '⏳ Probando conexión con api.groq.com...';
+  if(!key){ box.textContent = '❌ No hay clave Groq ingresada.'; box.style.color='var(--err)'; return; }
+  try {
+    box.textContent = '⏳ Consultando modelos disponibles...';
+    const r = await fetch('https://api.groq.com/openai/v1/models',{
+      headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'}
+    });
+    if(r.status===401||r.status===403){
+      box.textContent = '❌ Clave inválida (HTTP '+r.status+')\nGenerá una nueva en console.groq.com/keys';
+      box.style.color='var(--err)'; return;
+    }
+    if(!r.ok){ box.textContent = '❌ Error HTTP '+r.status; box.style.color='var(--err)'; return; }
+    const d = await r.json();
+    const modelos = (d.data||[]).filter(m=>!m.id.includes('whisper')&&!m.id.includes('tts')).map(m=>m.id);
+    box.style.color = 'var(--ok)';
+    box.textContent = '✅ Conexión OK. Modelos disponibles:\n' + modelos.join('\n');
+  } catch(e) {
+    box.style.color = 'var(--err)';
+    box.textContent = '❌ Error de red: ' + e.message + '\n\nPosible causa: sin internet o firewall bloqueando api.groq.com';
+  }
+}
+
 // ── API TOGGLE ──
 function setAPI(api) {
   activeAPI = api;
@@ -1079,10 +1109,10 @@ async function sendMsg() {
     let html = `<span style="color:var(--err)">⚠ ${msg}</span>`;
     if(msg.includes('credit')||msg.includes('balance')||msg.includes('billing'))
       html=`<span style="color:var(--err)">⚠ <strong>Saldo insuficiente en Claude.</strong><br>Cargá créditos en <a href="https://console.anthropic.com/settings/billing" target="_blank" style="color:var(--accent)">console.anthropic.com/billing</a></span>`;
-    else if(msg.includes('API key')||msg.includes('401')||msg.includes('403'))
-      html=`<span style="color:var(--err)">⚠ <strong>API key inválida.</strong> Verificá la clave en ⚙️.</span>`;
     else if(msg.includes('no longer available')||msg.includes('deprecated'))
-      html=`<span style="color:var(--err)">⚠ <strong>Modelo deprecado.</strong> Actualizá la app descargando la última versión.</span>`;
+      html=`<span style="color:var(--err)">⚠ <strong>Modelo deprecado.</strong> Actualizá la app.</span>`;
+    else if(msg.includes('fetch')||msg.includes('Failed to fetch')||msg==='NetworkError when attempting to fetch resource.')
+      html=`<span style="color:var(--err)">⚠ <strong>Error de red.</strong> Revisá tu conexión a internet.</span>`;
     typing.innerHTML=html; history.pop();
   }
   document.getElementById('msgs').scrollTop=99999;
@@ -1098,48 +1128,95 @@ async function callClaude() {
 async function callGemini() {
   const key=localStorage.getItem('fredx_gemini_key')||'';
   if(!key) throw new Error('Configurá la API key de Gemini en ⚙️ · Es gratis en aistudio.google.com/apikey');
-  const MODELS=['gemini-2.5-flash','gemini-2.5-flash-preview-05-20','gemini-1.5-flash','gemini-2.0-flash-exp','gemini-1.5-flash-latest'];
+  const MODELS=['gemini-2.5-flash','gemini-2.5-flash-preview-05-20','gemini-2.0-flash','gemini-1.5-flash','gemini-1.5-flash-latest'];
   const body=JSON.stringify({system_instruction:{parts:[{text:SYSTEM}]},contents:history.map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]}))});
+  let lastErr='';
   for(const model of MODELS){
     try{
       const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,{method:'POST',headers:{'Content-Type':'application/json'},body});
-      if(!res.ok){const e=await res.json().catch(()=>({}));const msg=e.error?.message||'';if(msg.includes('deprecated')||msg.includes('no longer available')||msg.includes('not found'))continue;throw new Error(msg||`HTTP ${res.status}`);}
+      if(!res.ok){
+        const e=await res.json().catch(()=>({}));
+        const errMsg=e.error?.message||`HTTP ${res.status}`;
+        const errCode=e.error?.code||res.status;
+        // Si es 400/401/403 con mensaje de clave, lanzar directo con mensaje real
+        if(errCode===400||errCode===401||errCode===403){
+          lastErr=`Gemini: ${errMsg} (HTTP ${errCode})`;
+          // No seguir probando modelos si es error de autenticación
+          if(errMsg.toLowerCase().includes('api key')||errCode===401||errCode===403) throw new Error(lastErr);
+        }
+        if(errMsg.match(/deprecated|no longer available|not found|404/i)){continue;}
+        lastErr=`Gemini [${model}]: ${errMsg}`;
+        continue;
+      }
       const d=await res.json();const t=d.candidates?.[0]?.content?.parts?.[0]?.text;if(t)return t;
-    }catch(ex){if(String(ex.message).match(/deprecated|no longer|not found/i))continue;throw ex;}
+    }catch(ex){
+      if(String(ex.message).match(/deprecated|no longer|not found/i)){continue;}
+      throw ex;
+    }
   }
-  throw new Error('Ningún modelo de Gemini disponible. Verificá tu API key o probá con Groq (gratis).');
+  throw new Error(lastErr||'Gemini: sin respuesta. Verificá tu API key en aistudio.google.com/apikey');
 }
 
 async function callGroq() {
   const key = localStorage.getItem('fredx_groq_key') || '';
   if(!key) throw new Error('Configurá la API key de Groq en ⚙️ — es gratis en console.groq.com');
-  if(!key.startsWith('gsk_')) throw new Error('Clave de Groq inválida — debe empezar con gsk_ · Creá una nueva en console.groq.com/keys');
-  const MODELS = [
-    'llama3-70b-8192',
-    'llama3-8b-8192',
-    'llama-3.1-8b-instant',
-    'gemma2-9b-it',
-    'mixtral-8x7b-32768'
-  ];
+
+  const headers = {'Authorization':'Bearer '+key,'Content-Type':'application/json'};
   const msgs = [{role:'system',content:SYSTEM},...history.slice(-10)];
+
+  // Paso 1: consultar modelos disponibles en tiempo real
+  let MODELS = [];
+  try {
+    const mr = await fetch('https://api.groq.com/openai/v1/models',{headers});
+    if(mr.status===401) throw new Error('API key de Groq inválida — generá una nueva en console.groq.com/keys');
+    if(mr.status===403) throw new Error('API key de Groq inválida — generá una nueva en console.groq.com/keys');
+    if(mr.ok){
+      const md = await mr.json();
+      const all = (md.data||[]).map(m=>m.id).filter(id=>
+        !id.includes('whisper')&&!id.includes('tts')&&!id.includes('vision')&&
+        !id.includes('guard')&&!id.includes('distil')
+      );
+      all.sort((a,b)=>{
+        const sc=id=>(id.includes('70b')?4:id.includes('405b')?5:id.includes('8b')?3:id.includes('mixtral')?2:1);
+        return sc(b)-sc(a);
+      });
+      MODELS = all.slice(0,8);
+    }
+  } catch(e){
+    if(e.message.includes('inválida')) throw e;
+    // Si falla por red o CORS, seguimos con fallback
+  }
+
+  // Fallback con modelos conocidos si no se pudo listar
+  if(!MODELS.length) MODELS = [
+    'llama-3.3-70b-versatile','llama3-70b-8192','llama-3.1-70b-versatile',
+    'llama3-8b-8192','llama-3.1-8b-instant','gemma2-9b-it','mixtral-8x7b-32768'
+  ];
+
+  let lastErr = '';
+  // Paso 2: intentar con cada modelo disponible
   for(const model of MODELS){
     try {
       const r = await fetch('https://api.groq.com/openai/v1/chat/completions',{
-        method:'POST',
-        headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},
+        method:'POST', headers,
         body:JSON.stringify({model,messages:msgs,max_tokens:800,temperature:0.3})
       });
-      if(r.status===401) throw new Error('API key de Groq inválida. Creá una nueva en console.groq.com/keys');
-      if(r.status===429) { await new Promise(res=>setTimeout(res,2000)); continue; }
-      if(!r.ok){ const e=await r.json().catch(()=>({})); if(r.status===404||e.error?.code==='model_not_active'||e.error?.type==='invalid_request_error') continue; throw new Error('Groq error '+r.status); }
+      if(r.status===401||r.status===403) throw new Error('API key de Groq inválida — generá una nueva en console.groq.com/keys');
+      if(r.status===429){ await new Promise(res=>setTimeout(res,3000)); continue; }
+      if(!r.ok){
+        const er=await r.json().catch(()=>({}));
+        lastErr = er.error?.message||`HTTP ${r.status}`;
+        if(r.status===404||er.error?.type==='invalid_request_error') continue;
+        throw new Error('Groq error: '+lastErr);
+      }
       const d = await r.json();
       return d.choices?.[0]?.message?.content || '(sin respuesta)';
     } catch(e){
-      if(e.message.includes('inválida')||e.message.includes('gsk_')) throw e;
-      // si es error de red u otro, seguir con el siguiente modelo
+      if(e.message.includes('inválida')) throw e;
+      lastErr = e.message;
     }
   }
-  throw new Error('No se pudo conectar con Groq. Verificá tu clave en ⚙️ (debe comenzar con gsk_)');
+  throw new Error('Groq: no se pudo obtener respuesta. '+(lastErr||'Verificá tu clave en console.groq.com/keys'));
 }
 
 // ════════════════════════════════════════════════════
