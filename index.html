@@ -248,6 +248,21 @@ textarea:focus{outline:none;border-color:var(--accent);background:var(--surface)
 
   .planta-tab{padding:6px 14px;border:none;border-radius:20px;cursor:pointer;font-size:12px;font-weight:600;background:var(--border);color:var(--text);transition:all .2s}
   .planta-tab.active{background:var(--accent);color:#fff}
+  .pv-ftab{padding:7px 14px;border:none;border-radius:20px;cursor:pointer;font-size:12px;font-weight:600;background:var(--border);color:var(--text);transition:all .2s}
+  .pv-ftab.active{background:var(--accent);color:#fff}
+  .pv-item{background:var(--card);border-radius:10px;padding:11px 12px;margin-bottom:8px;border-left:4px solid var(--border);transition:border-color .2s}
+  .pv-item.ok{border-left-color:#2e7d32;background:rgba(46,125,50,.07)}
+  .pv-item.alerta{border-left-color:#e53e3e;background:rgba(229,62,62,.06)}
+  .pv-item-top{display:flex;align-items:center;gap:10px}
+  .pv-check{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;background:var(--surface);transition:all .2s}
+  .pv-check.checked{background:#2e7d32;border-color:#2e7d32;color:#fff}
+  .pv-label{font-size:13px;font-weight:600;flex:1}
+  .pv-delete{background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:16px;padding:2px 6px;opacity:.5}
+  .pv-delete:hover{opacity:1;color:#e53e3e}
+  .pv-fields{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+  .pv-field label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text-secondary);display:block;margin-bottom:3px}
+  .pv-field input{width:100%;padding:6px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;box-sizing:border-box}
+  .pv-field input.normal-edit{border-color:var(--accent);font-size:12px}
   .planta-circuit-step{display:flex;align-items:flex-start;gap:10px;padding:10px;margin:6px 0;background:var(--card);border-radius:8px;border-left:4px solid var(--accent)}
   .planta-circuit-step .step-icon{font-size:22px;flex-shrink:0}
   .planta-maint-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding:8px;background:var(--card);border-radius:8px;margin:4px 0;font-size:13px}
@@ -334,6 +349,7 @@ textarea:focus{outline:none;border-color:var(--accent);background:var(--surface)
   <button class="tab active" id="tabChat" onclick="switchTab('chat')">💬 Chat IA</button>
   <button class="tab" id="tabDB" onclick="switchTab('db')">📋 Base de fallas</button>
   <button class="tab" id="tabManual" onclick="switchTab('manual')">📖 Manual</button>
+  <button class="tab" id="tabPlanta" onclick="switchTab('planta')">🏭 Planta</button>
 </div>
 
 <!-- CHAT -->
@@ -877,6 +893,60 @@ textarea:focus{outline:none;border-color:var(--accent);background:var(--surface)
 
 </div><!-- fin manualView -->
 
+<!-- ═══ PLANTA VIEW ═══ -->
+<div id="plantaView" style="display:none;padding:14px;overflow-y:auto;flex:1">
+
+  <!-- Header -->
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+    <span style="font-size:26px">🏭</span>
+    <div>
+      <div style="font-weight:700;font-size:16px">Planta de agua para diálisis</div>
+      <div style="font-size:12px;color:var(--text-secondary)">Checklist de mantenimiento con valores editables</div>
+    </div>
+  </div>
+
+  <!-- Modelo selector -->
+  <div style="background:var(--card);border-radius:10px;padding:12px;margin-bottom:12px">
+    <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary)">Modelo de planta</label>
+    <select id="pv_modelo" onchange="pvCargarModelo()" style="width:100%;margin-top:6px;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:14px">
+      <option value="apema_os">🇦🇷 Apema serie OS (60–1200 L/h)</option>
+      <option value="apema_oe">🇦🇷 Apema serie OE (30–2000 L/h)</option>
+      <option value="fresenius_aquabplus">Fresenius AquaBplus (1000–3000 L/h)</option>
+      <option value="fresenius_aquac">Fresenius AquaC UNO H</option>
+      <option value="generico">Genérico / Otra marca</option>
+    </select>
+  </div>
+
+  <!-- Pestañas de frecuencia -->
+  <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap" id="pv_freq_tabs">
+    <button class="pv-ftab active" onclick="pvSetFreq('diario')">📅 Diario</button>
+    <button class="pv-ftab" onclick="pvSetFreq('semanal')">📆 Semanal</button>
+    <button class="pv-ftab" onclick="pvSetFreq('mensual')">🗓️ Mensual</button>
+    <button class="pv-ftab" onclick="pvSetFreq('trimestral')">📊 Trimestral</button>
+  </div>
+
+  <!-- Checklist -->
+  <div id="pv_checklist"></div>
+
+  <!-- Agregar ítem personalizado -->
+  <div style="background:var(--card);border-radius:10px;padding:12px;margin-top:14px">
+    <div style="font-size:13px;font-weight:700;margin-bottom:8px">➕ Agregar control propio</div>
+    <input id="pv_new_label" placeholder="Descripción del control..." style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;box-sizing:border-box;margin-bottom:6px">
+    <div style="display:flex;gap:6px">
+      <input id="pv_new_normal" placeholder="Valor normal (ej: 1.5–3 bar)" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px">
+      <button onclick="pvAddCustom()" style="padding:8px 14px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:13px">Agregar</button>
+    </div>
+  </div>
+
+  <!-- Botones de acción -->
+  <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+    <button onclick="pvResetChecks()" style="flex:1;padding:10px;background:var(--border);color:var(--text);border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">🔄 Reiniciar checks</button>
+    <button onclick="pvGuardarValores()" style="flex:1;padding:10px;background:#2e7d32;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">💾 Guardar valores</button>
+  </div>
+  <div id="pv_save_msg" style="text-align:center;font-size:12px;color:#2e7d32;margin-top:6px;min-height:18px"></div>
+
+</div><!-- fin plantaView -->
+
 <script>
 function toggleManualSection(id){
   document.getElementById(id).classList.toggle('open');
@@ -946,6 +1016,7 @@ window.onload = () => {
   setAPI(localStorage.getItem('fredx_api') || 'gemini');
   loadUserData();
   renderDB();
+  pvItems = pvLoadItems();
 };
 
 // ── SETTINGS ──
@@ -969,12 +1040,12 @@ function setAPI(api) {
 
 // ── TABS ──
 function switchTab(tab) {
-  document.getElementById('chatView').style.display   = tab==='chat'   ? 'flex'  : 'none';
-  document.getElementById('dbView').style.display     = tab==='db'     ? 'block' : 'none';
-  document.getElementById('manualView').style.display = tab==='manual' ? 'block' : 'none';
-  document.getElementById('tabChat').classList.toggle('active',   tab==='chat');
-  document.getElementById('tabDB').classList.toggle('active',     tab==='db');
-  document.getElementById('tabManual').classList.toggle('active', tab==='manual');
+  document.getElementById('chatView').style.display    = tab==='chat'   ? 'flex'  : 'none';
+  document.getElementById('dbView').style.display      = tab==='db'     ? 'block' : 'none';
+  document.getElementById('manualView').style.display  = tab==='manual' ? 'block' : 'none';
+  document.getElementById('plantaView').style.display  = tab==='planta' ? 'block' : 'none';
+  ['Chat','DB','Manual','Planta'].forEach(t=>document.getElementById('tab'+t).classList.toggle('active', tab===t.toLowerCase()));
+  if(tab==='planta') pvRender();
 }
 
 // ── CHAT ──
@@ -1026,7 +1097,7 @@ async function callClaude() {
 }
 async function callGemini() {
   const key=localStorage.getItem('fredx_gemini_key')||'';
-  if(!key) throw new Error('Configurá la API key de Gemini en ⚙️');
+  if(!key) throw new Error('Configurá la API key de Gemini en ⚙️ · Es gratis en aistudio.google.com/apikey');
   const MODELS=['gemini-2.5-flash','gemini-2.5-flash-preview-05-20','gemini-1.5-flash','gemini-2.0-flash-exp','gemini-1.5-flash-latest'];
   const body=JSON.stringify({system_instruction:{parts:[{text:SYSTEM}]},contents:history.map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]}))});
   for(const model of MODELS){
@@ -1042,7 +1113,14 @@ async function callGemini() {
 async function callGroq() {
   const key = localStorage.getItem('fredx_groq_key') || '';
   if(!key) throw new Error('Configurá la API key de Groq en ⚙️ — es gratis en console.groq.com');
-  const MODELS = ['llama-3.3-70b-versatile','llama-3.1-70b-versatile','llama3-70b-8192','llama3-8b-8192','mixtral-8x7b-32768'];
+  if(!key.startsWith('gsk_')) throw new Error('Clave de Groq inválida — debe empezar con gsk_ · Creá una nueva en console.groq.com/keys');
+  const MODELS = [
+    'llama3-70b-8192',
+    'llama3-8b-8192',
+    'llama-3.1-8b-instant',
+    'gemma2-9b-it',
+    'mixtral-8x7b-32768'
+  ];
   const msgs = [{role:'system',content:SYSTEM},...history.slice(-10)];
   for(const model of MODELS){
     try {
@@ -1052,13 +1130,16 @@ async function callGroq() {
         body:JSON.stringify({model,messages:msgs,max_tokens:800,temperature:0.3})
       });
       if(r.status===401) throw new Error('API key de Groq inválida. Creá una nueva en console.groq.com/keys');
-      if(r.status===429) { await new Promise(res=>setTimeout(res,1500)); continue; }
-      if(!r.ok){ const e=await r.json().catch(()=>({})); if(e.error?.code==='model_not_active') continue; throw new Error('Groq error '+r.status); }
+      if(r.status===429) { await new Promise(res=>setTimeout(res,2000)); continue; }
+      if(!r.ok){ const e=await r.json().catch(()=>({})); if(r.status===404||e.error?.code==='model_not_active'||e.error?.type==='invalid_request_error') continue; throw new Error('Groq error '+r.status); }
       const d = await r.json();
       return d.choices?.[0]?.message?.content || '(sin respuesta)';
-    } catch(e){ if(e.message.includes('inválida')||e.message.includes('Groq error')) throw e; }
+    } catch(e){
+      if(e.message.includes('inválida')||e.message.includes('gsk_')) throw e;
+      // si es error de red u otro, seguir con el siguiente modelo
+    }
   }
-  throw new Error('No se pudo conectar con Groq. Verificá tu clave en ⚙️');
+  throw new Error('No se pudo conectar con Groq. Verificá tu clave en ⚙️ (debe comenzar con gsk_)');
 }
 
 // ════════════════════════════════════════════════════
@@ -1785,6 +1866,196 @@ document.addEventListener('DOMContentLoaded', function() {
   renderCxContent();
   renderCircContent();
 });
+
+// ===== PLANTA VIEW (tab dedicado) =====
+var pvFreq = 'diario';
+var pvModelo = 'apema_os';
+
+// Items por defecto: {id, freq, label, normal, medido, ok, custom}
+var PV_DEFAULTS = {
+  apema_os:[
+    {id:'p01',freq:'diario',label:'Conductividad permeado',normal:'≤ 5 µS/cm',medido:'',ok:false},
+    {id:'p02',freq:'diario',label:'Presión entrada (agua de red)',normal:'2–6 bar',medido:'',ok:false},
+    {id:'p03',freq:'diario',label:'Presión post-prefiltro',normal:'1.5–5.5 bar',medido:'',ok:false},
+    {id:'p04',freq:'diario',label:'Presión membrana OI (alta)',normal:'8–15 bar',medido:'',ok:false},
+    {id:'p05',freq:'diario',label:'Presión permeado (salida)',normal:'0.3–1 bar',medido:'',ok:false},
+    {id:'p06',freq:'diario',label:'Caudal permeado',normal:'Según modelo (L/h)',medido:'',ok:false},
+    {id:'p07',freq:'diario',label:'Ciclo lavado automático activo',normal:'Cada 2 horas',medido:'',ok:false},
+    {id:'p08',freq:'diario',label:'Alarmas activas en panel',normal:'Ninguna',medido:'',ok:false},
+    {id:'p09',freq:'semanal',label:'Cloro libre post-carbón (RC50)',normal:'0 ppm',medido:'',ok:false},
+    {id:'p10',freq:'semanal',label:'Dureza salida suavizador (RD1)',normal:'0 °fH',medido:'',ok:false},
+    {id:'p11',freq:'semanal',label:'Nivel de sal depósito',normal:'Mínimo 50% lleno',medido:'',ok:false},
+    {id:'p12',freq:'semanal',label:'Presión diferencial prefiltro',normal:'< 0.5 bar',medido:'',ok:false},
+    {id:'p13',freq:'mensual',label:'Tasa de rechazo membrana OI',normal:'≥ 95%',medido:'',ok:false},
+    {id:'p14',freq:'mensual',label:'Bacterias (UFC/mL)',normal:'≤ 100 UFC/mL',medido:'',ok:false},
+    {id:'p15',freq:'mensual',label:'Endotoxinas (EU/mL)',normal:'≤ 0.25 EU/mL',medido:'',ok:false},
+    {id:'p16',freq:'mensual',label:'Cambio cartucho prefiltro 5µm',normal:'Si ΔP > 0.5 bar',medido:'',ok:false},
+    {id:'p17',freq:'trimestral',label:'Desinfección química loop',normal:'H₂O₂ 3% / 60 min',medido:'',ok:false},
+    {id:'p18',freq:'trimestral',label:'Residuo desinfectante post-enjuague (R420)',normal:'< 0.1 ppm',medido:'',ok:false},
+    {id:'p19',freq:'trimestral',label:'Limpieza lecho de carbón activado',normal:'Retrolavado o reemplazo',medido:'',ok:false},
+    {id:'p20',freq:'trimestral',label:'Inspección bomba HP (presión trabajo)',normal:'8–15 bar',medido:'',ok:false},
+  ],
+  apema_oe:[
+    {id:'q01',freq:'diario',label:'Conductividad permeado',normal:'≤ 5 µS/cm',medido:'',ok:false},
+    {id:'q02',freq:'diario',label:'Presión entrada',normal:'2–6 bar',medido:'',ok:false},
+    {id:'q03',freq:'diario',label:'Presión membrana OI',normal:'8–15 bar',medido:'',ok:false},
+    {id:'q04',freq:'diario',label:'Caudal permeado',normal:'Según modelo (L/h)',medido:'',ok:false},
+    {id:'q05',freq:'diario',label:'Fugas visibles',normal:'Ninguna',medido:'',ok:false},
+    {id:'q06',freq:'semanal',label:'Cloro libre post-carbón (RC50)',normal:'0 ppm',medido:'',ok:false},
+    {id:'q07',freq:'semanal',label:'Dureza salida suavizador (RD1)',normal:'0 °fH',medido:'',ok:false},
+    {id:'q08',freq:'semanal',label:'Nivel de sal',normal:'Mínimo 50%',medido:'',ok:false},
+    {id:'q09',freq:'mensual',label:'Tasa de rechazo OI',normal:'≥ 95%',medido:'',ok:false},
+    {id:'q10',freq:'mensual',label:'Muestreo microbiológico',normal:'≤ 100 UFC/mL',medido:'',ok:false},
+    {id:'q11',freq:'mensual',label:'Cambio prefiltro 5µm',normal:'Mensual o antes si hay caída de caudal',medido:'',ok:false},
+    {id:'q12',freq:'trimestral',label:'Desinfección química',normal:'Ácido peracético / formalina',medido:'',ok:false},
+    {id:'q13',freq:'trimestral',label:'Residuo post-enjuague',normal:'< 0.1 ppm',medido:'',ok:false},
+  ],
+  fresenius_aquabplus:[
+    {id:'f01',freq:'diario',label:'Conductividad permeado',normal:'≤ 5 µS/cm',medido:'',ok:false},
+    {id:'f02',freq:'diario',label:'Presión entrada a planta',normal:'2–6 bar',medido:'',ok:false},
+    {id:'f03',freq:'diario',label:'Presión bomba HP',normal:'10–16 bar',medido:'',ok:false},
+    {id:'f04',freq:'diario',label:'Presión permeado loop',normal:'1.5–3 bar',medido:'',ok:false},
+    {id:'f05',freq:'diario',label:'Caudal permeado',normal:'Según modelo L/h',medido:'',ok:false},
+    {id:'f06',freq:'diario',label:'Alarmas panel planta',normal:'Ninguna',medido:'',ok:false},
+    {id:'f07',freq:'semanal',label:'Cloro libre post-carbón',normal:'< 0.1 mg/L',medido:'',ok:false},
+    {id:'f08',freq:'semanal',label:'Dureza agua (salida suavizador)',normal:'0 mg/L',medido:'',ok:false},
+    {id:'f09',freq:'semanal',label:'Nivel sal suavizador',normal:'Mínimo 50%',medido:'',ok:false},
+    {id:'f10',freq:'mensual',label:'Tasa de rechazo membrana',normal:'≥ 95%',medido:'',ok:false},
+    {id:'f11',freq:'mensual',label:'Bacterias agua (UFC/mL)',normal:'≤ 100 UFC/mL',medido:'',ok:false},
+    {id:'f12',freq:'mensual',label:'Endotoxinas (EU/mL)',normal:'≤ 0.25 EU/mL',medido:'',ok:false},
+    {id:'f13',freq:'trimestral',label:'Desinfección química loop',normal:'H₂O₂ 3% / 60 min',medido:'',ok:false},
+    {id:'f14',freq:'trimestral',label:'Residuo post-enjuague',normal:'0 ppm',medido:'',ok:false},
+  ],
+  fresenius_aquac:[
+    {id:'c01',freq:'diario',label:'Conductividad permeado',normal:'≤ 5 µS/cm',medido:'',ok:false},
+    {id:'c02',freq:'diario',label:'Presión entrada',normal:'2–6 bar',medido:'',ok:false},
+    {id:'c03',freq:'diario',label:'Presión membrana',normal:'8–14 bar',medido:'',ok:false},
+    {id:'c04',freq:'diario',label:'Caudal permeado',normal:'300–800 L/h',medido:'',ok:false},
+    {id:'c05',freq:'semanal',label:'Cloro libre post-carbón',normal:'< 0.1 mg/L',medido:'',ok:false},
+    {id:'c06',freq:'semanal',label:'Dureza salida suavizador',normal:'0 mg/L',medido:'',ok:false},
+    {id:'c07',freq:'mensual',label:'Muestreo microbiológico',normal:'≤ 100 UFC/mL',medido:'',ok:false},
+    {id:'c08',freq:'trimestral',label:'Desinfección química',normal:'H₂O₂ 3% o peracético',medido:'',ok:false},
+  ],
+  generico:[
+    {id:'g01',freq:'diario',label:'Conductividad permeado',normal:'≤ 5 µS/cm',medido:'',ok:false},
+    {id:'g02',freq:'diario',label:'Presión entrada',normal:'2–6 bar',medido:'',ok:false},
+    {id:'g03',freq:'diario',label:'Presión membrana OI',normal:'8–16 bar',medido:'',ok:false},
+    {id:'g04',freq:'diario',label:'Presión salida permeado',normal:'0.3–1.5 bar',medido:'',ok:false},
+    {id:'g05',freq:'diario',label:'Caudal permeado',normal:'Según modelo',medido:'',ok:false},
+    {id:'g06',freq:'semanal',label:'Cloro libre post-carbón',normal:'0 ppm',medido:'',ok:false},
+    {id:'g07',freq:'semanal',label:'Dureza agua (suavizador)',normal:'0 °fH',medido:'',ok:false},
+    {id:'g08',freq:'mensual',label:'Tasa de rechazo OI',normal:'≥ 95%',medido:'',ok:false},
+    {id:'g09',freq:'mensual',label:'Bacterias',normal:'≤ 100 UFC/mL',medido:'',ok:false},
+    {id:'g10',freq:'trimestral',label:'Desinfección loop',normal:'Ver protocolo',medido:'',ok:false},
+  ]
+};
+
+function pvGetStorageKey(){ return 'fredx_pv_'+pvModelo; }
+function pvGetCustomKey(){ return 'fredx_pvc_'+pvModelo; }
+
+function pvLoadItems(){
+  var saved = JSON.parse(localStorage.getItem(pvGetStorageKey())||'null');
+  var defaults = JSON.parse(JSON.stringify(PV_DEFAULTS[pvModelo]||PV_DEFAULTS.generico));
+  if(saved){
+    // Merge saved normal values and medido/ok into defaults
+    defaults.forEach(function(d){
+      var s = saved.find(function(x){return x.id===d.id;});
+      if(s){ d.normal=s.normal||d.normal; d.medido=s.medido||''; d.ok=s.ok||false; }
+    });
+  }
+  // Add custom items
+  var custom = JSON.parse(localStorage.getItem(pvGetCustomKey())||'[]');
+  return defaults.concat(custom);
+}
+
+function pvSaveItems(items){
+  var base = items.filter(function(i){return !i.custom;});
+  var custom = items.filter(function(i){return i.custom;});
+  localStorage.setItem(pvGetStorageKey(), JSON.stringify(base));
+  localStorage.setItem(pvGetCustomKey(), JSON.stringify(custom));
+}
+
+var pvItems = [];
+
+function pvCargarModelo(){
+  pvModelo = document.getElementById('pv_modelo').value;
+  pvItems = pvLoadItems();
+  pvRender();
+}
+
+function pvSetFreq(f){
+  pvFreq = f;
+  document.querySelectorAll('.pv-ftab').forEach(b=>b.classList.remove('active'));
+  var tabs=['diario','semanal','mensual','trimestral'];
+  var btns=document.querySelectorAll('.pv-ftab');
+  btns[tabs.indexOf(f)].classList.add('active');
+  pvRender();
+}
+
+function pvRender(){
+  if(!pvItems.length) pvItems = pvLoadItems();
+  var el = document.getElementById('pv_checklist');
+  if(!el) return;
+  var visible = pvItems.filter(function(i){return i.freq===pvFreq;});
+  if(!visible.length){el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-secondary);font-size:13px">No hay controles para esta frecuencia.<br>Podés agregar uno propio abajo ⬇️</div>';return;}
+  var done = visible.filter(function(i){return i.ok;}).length;
+  var html = '<div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px;text-align:right">'+done+'/'+visible.length+' completados</div>';
+  visible.forEach(function(item){
+    html += '<div class="pv-item'+(item.ok?' ok':'')+(item.alerta?' alerta':'')+'" id="pvitem_'+item.id+'">';
+    html += '<div class="pv-item-top">';
+    html += '<div class="pv-check'+(item.ok?' checked':'')+'" onclick="pvToggleOk(\''+item.id+'\')">'+(item.ok?'✓':'')+'</div>';
+    html += '<div class="pv-label">'+item.label+(item.custom?' <span style="font-size:10px;background:var(--accent);color:#fff;border-radius:4px;padding:1px 5px">PROPIO</span>':'')+'</div>';
+    if(item.custom) html += '<button class="pv-delete" onclick="pvDeleteCustom(\''+item.id+'\')">✕</button>';
+    html += '</div>';
+    html += '<div class="pv-fields">';
+    html += '<div class="pv-field"><label>Valor normal</label><input class="normal-edit" value="'+escH(item.normal)+'" oninput="pvUpdateNormal(\''+item.id+'\',this.value)" placeholder="ej: ≤5 µS/cm"></div>';
+    html += '<div class="pv-field"><label>Valor medido hoy</label><input value="'+escH(item.medido)+'" oninput="pvUpdateMedido(\''+item.id+'\',this.value)" placeholder="ej: 3.2"></div>';
+    html += '</div></div>';
+  });
+  el.innerHTML = html;
+}
+
+function escH(s){ return (s||'').replace(/"/g,'&quot;'); }
+
+function pvToggleOk(id){
+  var item = pvItems.find(function(i){return i.id===id;});
+  if(item){ item.ok=!item.ok; pvSaveItems(pvItems); pvRender(); }
+}
+function pvUpdateNormal(id,val){
+  var item = pvItems.find(function(i){return i.id===id;});
+  if(item){ item.normal=val; }
+}
+function pvUpdateMedido(id,val){
+  var item = pvItems.find(function(i){return i.id===id;});
+  if(item){ item.medido=val; }
+}
+function pvGuardarValores(){
+  pvSaveItems(pvItems);
+  var msg = document.getElementById('pv_save_msg');
+  msg.textContent='✓ Valores guardados';
+  setTimeout(function(){msg.textContent='';},2500);
+}
+function pvResetChecks(){
+  pvItems.forEach(function(i){i.ok=false;});
+  pvSaveItems(pvItems);
+  pvRender();
+}
+function pvAddCustom(){
+  var label = document.getElementById('pv_new_label').value.trim();
+  var normal = document.getElementById('pv_new_normal').value.trim();
+  if(!label) return;
+  var newItem = {id:'cu_'+Date.now(),freq:pvFreq,label:label,normal:normal||'—',medido:'',ok:false,custom:true};
+  pvItems.push(newItem);
+  pvSaveItems(pvItems);
+  document.getElementById('pv_new_label').value='';
+  document.getElementById('pv_new_normal').value='';
+  pvRender();
+}
+function pvDeleteCustom(id){
+  pvItems = pvItems.filter(function(i){return i.id!==id;});
+  pvSaveItems(pvItems);
+  pvRender();
+}
 
 // ===== PLANTA DE AGUA =====
 var plantaTab = 'circuito';
