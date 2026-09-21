@@ -245,6 +245,21 @@ textarea:focus{outline:none;border-color:var(--accent);background:var(--surface)
 .ci-cal-box{font-size:12px;color:var(--t2);background:var(--warn-l);border-left:3px solid var(--warn);border-radius:0 8px 8px 0;padding:8px 10px;line-height:1.55;margin-top:6px}
 .ci-maint-box{font-size:12px;color:var(--t2);background:var(--ok-l);border-left:3px solid var(--ok);border-radius:0 8px 8px 0;padding:8px 10px;line-height:1.55;margin-top:6px}
 .ci-ask{width:100%;margin-top:14px;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:14px;font-weight:700;cursor:pointer}
+
+  .planta-tab{padding:6px 14px;border:none;border-radius:20px;cursor:pointer;font-size:12px;font-weight:600;background:var(--border);color:var(--text);transition:all .2s}
+  .planta-tab.active{background:var(--accent);color:#fff}
+  .planta-circuit-step{display:flex;align-items:flex-start;gap:10px;padding:10px;margin:6px 0;background:var(--card);border-radius:8px;border-left:4px solid var(--accent)}
+  .planta-circuit-step .step-icon{font-size:22px;flex-shrink:0}
+  .planta-maint-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding:8px;background:var(--card);border-radius:8px;margin:4px 0;font-size:13px}
+  .planta-maint-row .freq{font-weight:700;color:var(--accent)}
+  .planta-fault-card{background:var(--card);border-radius:10px;padding:12px;margin:8px 0;border-left:4px solid #e53e3e}
+  .planta-fault-card h4{margin:0 0 4px;font-size:14px;color:#e53e3e}
+  .planta-fault-card p{margin:2px 0;font-size:13px}
+  .planta-param-table{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0}
+  .planta-param-table th{background:var(--accent);color:#fff;padding:6px 8px;text-align:left}
+  .planta-param-table td{padding:6px 8px;border-bottom:1px solid var(--border)}
+  .planta-param-table tr:nth-child(even) td{background:var(--hover)}
+
 </style>
 </head>
 <body>
@@ -270,6 +285,7 @@ textarea:focus{outline:none;border-color:var(--accent);background:var(--surface)
   <div class="api-toggle">
     <button class="api-btn active" id="btnClaude" onclick="setAPI('claude')">Claude</button>
     <button class="api-btn" id="btnGemini" onclick="setAPI('gemini')">Gemini</button>
+    <button class="api-btn" id="btnGroq" onclick="setAPI('groq')" style="background:#f55036;color:#fff">Groq ⚡</button>
   </div>
   <button class="icon-btn" onclick="toggleSettings()" title="Configuración">
     <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -291,7 +307,7 @@ textarea:focus{outline:none;border-color:var(--accent);background:var(--surface)
     </div>
   </div>
   <div class="settings-row">
-    <label>API Key — Gemini (Google)</label>
+    <label>API Key — Gemini (Google) · <span style="color:#2e7d32;font-weight:700">GRATIS</span></label>
     <div class="key-input-row">
       <input type="password" id="geminiKey" placeholder="AIzaSy..." autocomplete="off">
       <a class="console-btn gemini-btn" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">
@@ -300,7 +316,17 @@ textarea:focus{outline:none;border-color:var(--accent);background:var(--surface)
       </a>
     </div>
   </div>
-  <div class="settings-note">🔒 Claves guardadas solo en tu navegador. Sin clave el chat no funciona, pero la Base de Fallas sí — incluso sin internet.</div>
+  <div class="settings-row">
+    <label>API Key — Groq (Llama 3.x) · <span style="color:#2e7d32;font-weight:700">GRATIS · Muy rápido</span></label>
+    <div class="key-input-row">
+      <input type="password" id="groqKey" placeholder="gsk_..." autocomplete="off">
+      <a class="console-btn" style="background:#f55036" href="https://console.groq.com/keys" target="_blank" rel="noopener">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        Crear clave
+      </a>
+    </div>
+  </div>
+  <div class="settings-note">🔒 Claves guardadas solo en tu navegador. Sin clave el chat no funciona, pero la Base de Fallas sí — incluso sin internet.<br>⚡ <strong>Groq y Gemini son gratuitos</strong> — registrarse y crear clave es suficiente, sin tarjeta.</div>
   <button class="btn-save" onclick="saveKeys()">✓ Guardar y cerrar</button>
 </div>
 
@@ -819,11 +845,42 @@ textarea:focus{outline:none;border-color:var(--accent);background:var(--surface)
     </div>
   </div>
 
+
+  <!-- PLANTA DE AGUA -->
+  <div class="manual-section" id="msPlanta">
+    <div class="manual-section-header" onclick="toggleManualSection('msPlanta')">
+      <span style="font-size:18px">🏭</span>
+      <h3>Planta de agua para diálisis — Fresenius AquaBplus / AquaC</h3>
+      <span class="toggle-icon">▼</span>
+    </div>
+    <div class="manual-section-body" style="display:none">
+      <div style="margin-bottom:12px">
+        <label style="font-weight:600;font-size:13px">Modelo:</label>
+        <select id="plantaModelo" onchange="renderPlanta()" style="margin-left:8px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:13px">
+          <option value="apema_os">🇦🇷 Apema serie OS (60–1200 L/h)</option>
+          <option value="apema_oe">🇦🇷 Apema serie OE (30–2000 L/h)</option>
+          <option value="aquabplus">Fresenius AquaBplus (1000–3000 L/h)</option>
+          <option value="aquabplus_hf">Fresenius AquaBplus HF (hot flush)</option>
+          <option value="aquac">Fresenius AquaC UNO H</option>
+          <option value="lite">Fresenius AquaB LITE</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px" id="plantaTabs">
+        <button class="planta-tab active" onclick="setPlantaTab('circuito')">🔄 Circuito</button>
+        <button class="planta-tab" onclick="setPlantaTab('parametros')">📊 Parámetros</button>
+        <button class="planta-tab" onclick="setPlantaTab('mantenimiento')">🔧 Mantenimiento</button>
+        <button class="planta-tab" onclick="setPlantaTab('fallas')">⚠️ Fallas</button>
+      </div>
+      <div id="plantaContent"></div>
+    </div>
+  </div>
+
 </div><!-- fin manualView -->
 
 <script>
 function toggleManualSection(id){
   document.getElementById(id).classList.toggle('open');
+  if(id === 'msPlanta') renderPlantaContent();
 }
 </script>
 
@@ -885,7 +942,8 @@ Respondé en español rioplatense, directo y técnico. Usá **negrita** para dia
 window.onload = () => {
   document.getElementById('claudeKey').value = localStorage.getItem('fredx_claude_key') || '';
   document.getElementById('geminiKey').value = localStorage.getItem('fredx_gemini_key') || '';
-  setAPI(localStorage.getItem('fredx_api') || 'claude');
+  document.getElementById('groqKey').value = localStorage.getItem('fredx_groq_key') || '';
+  setAPI(localStorage.getItem('fredx_api') || 'gemini');
   loadUserData();
   renderDB();
 };
@@ -895,6 +953,7 @@ function toggleSettings() { document.getElementById('settingsPanel').classList.t
 function saveKeys() {
   localStorage.setItem('fredx_claude_key', document.getElementById('claudeKey').value.trim());
   localStorage.setItem('fredx_gemini_key', document.getElementById('geminiKey').value.trim());
+  localStorage.setItem('fredx_groq_key', document.getElementById('groqKey').value.trim());
   document.getElementById('settingsPanel').classList.remove('open');
   addBubble('ai', 'Claves guardadas. Todo listo para diagnosticar.');
 }
@@ -905,6 +964,7 @@ function setAPI(api) {
   localStorage.setItem('fredx_api', api);
   document.getElementById('btnClaude').classList.toggle('active', api === 'claude');
   document.getElementById('btnGemini').classList.toggle('active', api === 'gemini');
+  document.getElementById('btnGroq').classList.toggle('active', api === 'groq');
 }
 
 // ── TABS ──
@@ -927,7 +987,7 @@ function fmtAI(txt) {
 function addBubble(role, html, isTyping) {
   const msgs=document.getElementById('msgs');
   const wrap=document.createElement('div'); wrap.className='msg-wrap '+role;
-  if(role==='ai'){const m=document.createElement('div');m.className='msg-meta';m.textContent=activeAPI==='claude'?'FreDx · Claude':'FreDx · Gemini';wrap.appendChild(m);}
+  if(role==='ai'){const m=document.createElement('div');m.className='msg-meta';m.textContent=activeAPI==='claude'?'FreDx · Claude':activeAPI==='groq'?'FreDx · Groq ⚡':'FreDx · Gemini';wrap.appendChild(m);}
   const b=document.createElement('div'); b.className='bubble '+role;
   b.innerHTML=isTyping?'<div class="typing-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>':html;
   wrap.appendChild(b); msgs.appendChild(wrap); msgs.scrollTop=msgs.scrollHeight; return b;
@@ -940,7 +1000,7 @@ async function sendMsg() {
   history.push({role:'user',content:`[${document.getElementById('modelSel').value}] ${txt}`});
   const typing=addBubble('ai','',true);
   try {
-    const reply=activeAPI==='claude'?await callClaude():await callGemini();
+    const reply=activeAPI==='claude'?await callClaude():activeAPI==='groq'?await callGroq():await callGemini();
     history.push({role:'assistant',content:reply});
     typing.innerHTML=fmtAI(reply);
   } catch(e) {
@@ -976,7 +1036,29 @@ async function callGemini() {
       const d=await res.json();const t=d.candidates?.[0]?.content?.parts?.[0]?.text;if(t)return t;
     }catch(ex){if(String(ex.message).match(/deprecated|no longer|not found/i))continue;throw ex;}
   }
-  throw new Error('Ningún modelo de Gemini disponible. Verificá tu API key o probá con Claude.');
+  throw new Error('Ningún modelo de Gemini disponible. Verificá tu API key o probá con Groq (gratis).');
+}
+
+async function callGroq() {
+  const key = localStorage.getItem('fredx_groq_key') || '';
+  if(!key) throw new Error('Configurá la API key de Groq en ⚙️ — es gratis en console.groq.com');
+  const MODELS = ['llama-3.3-70b-versatile','llama-3.1-70b-versatile','llama3-70b-8192','llama3-8b-8192','mixtral-8x7b-32768'];
+  const msgs = [{role:'system',content:SYSTEM},...history.slice(-10)];
+  for(const model of MODELS){
+    try {
+      const r = await fetch('https://api.groq.com/openai/v1/chat/completions',{
+        method:'POST',
+        headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json'},
+        body:JSON.stringify({model,messages:msgs,max_tokens:800,temperature:0.3})
+      });
+      if(r.status===401) throw new Error('API key de Groq inválida. Creá una nueva en console.groq.com/keys');
+      if(r.status===429) { await new Promise(res=>setTimeout(res,1500)); continue; }
+      if(!r.ok){ const e=await r.json().catch(()=>({})); if(e.error?.code==='model_not_active') continue; throw new Error('Groq error '+r.status); }
+      const d = await r.json();
+      return d.choices?.[0]?.message?.content || '(sin respuesta)';
+    } catch(e){ if(e.message.includes('inválida')||e.message.includes('Groq error')) throw e; }
+  }
+  throw new Error('No se pudo conectar con Groq. Verificá tu clave en ⚙️');
 }
 
 // ════════════════════════════════════════════════════
@@ -1703,6 +1785,250 @@ document.addEventListener('DOMContentLoaded', function() {
   renderCxContent();
   renderCircContent();
 });
+
+// ===== PLANTA DE AGUA =====
+var plantaTab = 'circuito';
+
+var plantaData = {
+  apema_os:{
+    nombre:'Apema serie OS',
+    desc:'Fabricación argentina (Villa Dominico, Buenos Aires). Osmosis inversa con 1 a 4 membranas en espiral de poliamida. Sistema de lavado automático cada 2 horas. Conductímetros digitales de entrada y salida. Ideal para clínicas de diálisis de hasta ~20 puestos.',
+    etapas:'1 paso OI (1–4 membranas)',
+    caudal:'60 L/h (OS1.1) a 1200 L/h (OS1.9)',
+    desinfeccion:'Química (ácido peracético, formaldehído o metabisulfito)',
+    modelos:'OS1.1 (60 L/h) / OS1.3 (180 L/h) / OS1.5 (360 L/h) / OS1.7 (700 L/h) / OS1.9 (1200 L/h)',
+    bomba:'Rotatoria con paletas de grafito (1–2 HP, monofásica o trifásica)',
+    presion:'15 kg/cm² de trabajo',
+    rechazo:'98–99%',
+    reactivos:'Línea propia Apema: RC50 (cloro), RD1 (dureza), R420 (ácido peracético), RFO1 (formaldehído), RBS1 (metabisulfito)',
+    contacto:'Gral. Arredondo 5141, Villa Dominico, CABA | (011) 4207-0854 | apema.com.ar'
+  },
+  apema_oe:{
+    nombre:'Apema serie OE',
+    desc:'Línea económica de 12 modelos para aplicaciones industriales y médicas. Sin conductímetro digital de base (opcional). Limpieza de membrana manual. Apta para instalaciones pequeñas o como segunda etapa de purificación.',
+    etapas:'1 paso OI',
+    caudal:'30 L/h (OE0) a 2000 L/h (OE11)',
+    desinfeccion:'Química manual',
+    modelos:'OE0 (30 L/h) / OE1 (60 L/h) / OE3 (180 L/h) / OE5 (450 L/h) / OE7 (900 L/h) / OE11 (2000 L/h)',
+    bomba:'Rotatoria de alta eficiencia, bajo ruido',
+    presion:'15 kg/cm² de trabajo',
+    rechazo:'98–99%',
+    reactivos:'Línea Apema: RC50 (cloro libre), RD1 (dureza). Conductímetro como opcional.',
+    contacto:'Gral. Arredondo 5141, Villa Dominico, CABA | (011) 4207-0854 | apema.com.ar'
+  },
+  aquabplus:{
+    nombre:'AquaBplus',
+    desc:'Sistema de osmosis inversa de 1 a 3 etapas, caudal 1000–3000 L/h. Uso en centros con múltiples puestos (10–30+). Requiere agua de red presurizada (2–6 bar), suavizador, carbón activado y membranas de OI.',
+    etapas:'1 o 2 etapas OI',
+    caudal:'1000 / 2000 / 2500 / 3000 L/h',
+    desinfeccion:'Química (peróxido / hipoclorito)'
+  },
+  aquabplus_hf:{
+    nombre:'AquaBplus HF',
+    desc:'Variante del AquaBplus con desinfección térmica automática (hot flush). Ciclo a 85°C elimina biofilm sin necesidad de agentes químicos. Recomendado para clínicas con alta carga microbiológica.',
+    etapas:'2 etapas OI + circuito térmico',
+    caudal:'1000–3000 L/h',
+    desinfeccion:'Térmica automática 85°C (hot flush)'
+  },
+  aquac:{
+    nombre:'AquaC UNO H',
+    desc:'Sistema compacto todo-en-uno para centros pequeños (2–8 puestos). Integra pre-filtración, suavizador, carbón y una membrana de OI en un solo gabinete. Versión H incluye calentador para desinfección térmica.',
+    etapas:'1 etapa OI',
+    caudal:'300–800 L/h',
+    desinfeccion:'Térmica (versión H) o química'
+  },
+  lite:{
+    nombre:'AquaB LITE',
+    desc:'Versión económica para clínicas pequeñas. Un solo bloque de membrana, menor automatización, requiere más supervisión manual. Caudal reducido.',
+    etapas:'1 etapa OI',
+    caudal:'hasta 600 L/h',
+    desinfeccion:'Química manual'
+  }
+};
+
+var plantaCircuito = [
+  {icon:'🚿',title:'Agua de red (cruda)',desc:'Entrada principal. Presión recomendada 2–6 bar. Si la presión es baja (<1.5 bar), el sistema puede dar alarma de presión de entrada. Instalar manómetro en esta línea.'},
+  {icon:'🪨',title:'Filtro de sedimentos (prefiltro)',desc:'Cartuchos de 5 µm y 1 µm. Retienen partículas sólidas, óxido y arena. Cambio cada 3–6 meses según calidad del agua local. Si se tapona: caída de presión y alarma.'},
+  {icon:'🧂',title:'Suavizador de intercambio iónico',desc:'Resinas de intercambio catiónico. Elimina calcio y magnesio (dureza) para proteger las membranas de OI del sarro. Requiere regeneración con sal (NaCl) cada 3–7 días según consumo. Control: dureza de salida debe ser 0°fH.'},
+  {icon:'🪵',title:'Filtro de carbón activado',desc:'Elimina cloro libre y cloraminas (tóxicas para membranas y para el paciente en diálisis). Dos lechos en serie o un lecho con medición de tiempo de contacto. Control: cloro libre en salida = 0 ppm. Cambio o reactivación anual.'},
+  {icon:'🔵',title:'Bomba de alta presión (HP)',desc:'Impulsa el agua contra la membrana de OI a 8–16 bar. Es el corazón del sistema. Revisar presión de trabajo según especificación del modelo. El desgaste o fallo de esta bomba reduce drásticamente el caudal de permeado.'},
+  {icon:'🧱',title:'Membrana(s) de osmosis inversa',desc:'Membranas de poliamida (espiral enrollada). Retienen hasta el 99% de sales, bacterias, endotoxinas. Vida útil 3–5 años. El rechazo (concentrado) va al drenaje (20–30% del caudal de entrada). Control: conductividad de permeado ≤5 µS/cm, tasa de rechazo ≥95%.'},
+  {icon:'💧',title:'Tanque de almacenamiento / loop de distribución',desc:'El permeado se almacena y circula por un loop cerrado hasta las máquinas. El loop debe mantenerse en circulación continua para evitar estancamiento y proliferación bacteriana. Velocidad mínima en loop: >0.5 m/s.'},
+  {icon:'🩺',title:'Máquinas de diálisis',desc:'Toman el agua del loop para preparar el dializante. La presión de suministro debe ser 1.5–3 bar. Cada máquina usa ~500 mL/min durante la sesión.'}
+];
+
+var plantaParametros = [
+  {param:'Conductividad del permeado',limite:'≤5 µS/cm',norma:'ISO 13959 / AAMI RD52',nota:'Medir a la salida de membrana y en el loop'},
+  {param:'Cloro libre',limite:'< 0.1 mg/L',norma:'AAMI RD62',nota:'CRÍTICO: >0.1 ppm daña membranas y es tóxico para el paciente'},
+  {param:'Cloraminas',limite:'< 0.1 mg/L',norma:'AAMI RD62',nota:'Medir con kit específico (no confundir con cloro libre)'},
+  {param:'Bacterias (cultivo)',limite:'≤ 100 UFC/mL (acción: >50)',norma:'ISO 11663',nota:'Muestreo mensual en punto de uso'},
+  {param:'Endotoxinas',limite:'≤ 0.25 EU/mL (acción: >0.125)',norma:'ISO 11663',nota:'LAL test; crítico para diálisis de alto flujo (HDF)'},
+  {param:'Dureza total',limite:'0 mg/L (salida suavizador)',norma:'Fabricante',nota:'Dureza 0 protege las membranas de OI del incrustamiento'},
+  {param:'pH',limite:'6.5–7.5',norma:'ISO 13959',nota:'Fuera de rango afecta vida útil de membranas'},
+  {param:'Presión entrada OI',limite:'2–6 bar',norma:'Fabricante',nota:'< 1.5 bar → alarma presión baja; > 8 bar → riesgo membrana'},
+  {param:'Presión de trabajo HP',limite:'8–16 bar según modelo',norma:'Fabricante',nota:'Ver placa técnica del equipo'},
+  {param:'Tasa de rechazo OI',limite:'≥ 95%',norma:'Fabricante',nota:'= (1 − Cpermeado/Calimentación) × 100'},
+  {param:'Tasa de recuperación',limite:'60–75%',norma:'Fabricante',nota:'Mayor tasa = más concentrado = mayor riesgo de incrustación'},
+  {param:'TOC (carbono orgánico total)',limite:'< 0.5 mg/L',norma:'ISO 13959',nota:'Control de contaminación orgánica en el agua ultrapura'}
+];
+
+var plantaMantenimiento = {
+  apema_os:[
+    {freq:'Diario',tarea:'Verificar conductividad de permeado con conductímetro digital integrado (≤5 µS/cm). Registrar presiones de entrada, membrana y permeado. Verificar que el ciclo de lavado automático (cada 2h) esté activo. Revisar alarmas del presostato.'},
+    {freq:'Semanal',tarea:'Controlar cloro libre en salida del carbón activado con kit RC50 de Apema (debe ser 0 ppm). Verificar dureza de salida del suavizador con kit RD1 (debe ser 0). Limpiar prefiltro de 5 µm si presión diferencial >0.5 bar. Verificar nivel de sal del suavizador.'},
+    {freq:'Mensual',tarea:'Cambio de cartucho prefiltro 5 µm. Muestreo microbiológico (bacterias y endotoxinas). Verificar conductímetros con solución de referencia. Inspeccionar electroválvulas del ciclo de lavado automático. Verificar tasa de rechazo: medir conductividad entrada y salida → rechazo = (1 - Csal/Cent) × 100, debe ser ≥95%.'},
+    {freq:'Trimestral',tarea:'Desinfección química del sistema con ácido peracético (verificar residuo con kit R420 de Apema: debe ser <0.1 ppm antes de volver a operar). Alternativamente: formaldehído al 2% (verificar con kit RFO1: <1 ppm) o metabisulfito de sodio (verificar con kit RBS1). Limpiar lecho de carbón (retrolavado o reemplazo si saturado). Inspección general de conexiones y tuberías.'},
+    {freq:'Semestral',tarea:'Análisis fisicoquímico y microbiológico completo del agua. Inspección de la bomba rotatoria (paletas de grafito: verificar desgaste, son el principal desgaste de este tipo de bomba). Medir flujo real de permeado vs nominal. Revisar manómetros de acero inoxidable por corrosión o deriva.'},
+    {freq:'Anual',tarea:'Reemplazo de lecho de carbón activado si adsorción saturada (control con RC50). Inspección de resinas del suavizador. Calibración de conductímetros con solución estándar. Revisión de valvulería y sellos. Inspección de motor (carbones, rodamientos).'},
+    {freq:'Cada 3–5 años',tarea:'Reemplazo de membranas de poliamida si rechazo <95% tras limpieza química o flujo <70% del nominal. El modelo OS1.x usa membranas estándar 4"×40" accesibles en el mercado nacional.'}
+  ],
+  apema_oe:[
+    {freq:'Diario',tarea:'Verificar conductividad con conductímetro externo (si el equipo no tiene integrado). Revisar presiones de entrada y membrana. Verificar que no haya fugas.'},
+    {freq:'Semanal',tarea:'Control de cloro libre con RC50 (0 ppm requerido). Verificar dureza con RD1. Nivel de sal del suavizador. Limpiar prefiltro si hay caída de presión.'},
+    {freq:'Mensual',tarea:'Cambio de prefiltro 5 µm. Muestreo de agua. Verificar tasa de rechazo. Inspeccionar manómetros. Ajustar válvulas de regulación manual si el caudal de permeado cambió.'},
+    {freq:'Trimestral',tarea:'Desinfección química (ácido peracético o formaldehído). Verificar residuo con kits R420 o RFO1 antes de poner en servicio. Limpieza del lecho de carbón.'},
+    {freq:'Anual',tarea:'Revisión de bomba. Reemplazo de carbón si saturado. Análisis de agua completo. Inspección de membranas.'},
+    {freq:'Cada 3–5 años',tarea:'Reemplazo de membranas si rechazo <95% o flujo muy caído.'}
+  ],
+  aquabplus:[
+    {freq:'Diario',tarea:'Verificar presiones (entrada, post-carbón, HP, permeado), conductividad de permeado, caudal del loop, alarmas activas'},
+    {freq:'Semanal',tarea:'Limpiar prefiltros si presión diferencial >0.5 bar. Verificar nivel de sal en depósito del suavizador. Regeneración manual del suavizador si no es automática'},
+    {freq:'Mensual',tarea:'Cambio de cartuchos de prefiltro (5 µm y 1 µm). Muestreo microbiológico (bacterias y endotoxinas). Verificar tasa de rechazo de membrana. Inspeccionar conexiones y válvulas'},
+    {freq:'Trimestral',tarea:'Desinfección química del loop (peróxido de hidrógeno 3% o hipoclorito 50 ppm). Limpiar resinas del suavizador. Verificar lecho de carbón activado (tiempo de contacto mínimo 10 min)'},
+    {freq:'Semestral',tarea:'Análisis completo de agua (fisicoquímico + microbiológico). Inspección de bomba de alta presión (rodamientos, sellos). Verificar membrana OI (conductividad, flujo, tasa de rechazo)'},
+    {freq:'Anual',tarea:'Sustitución de lecho de carbón activado si quimisorción saturada. Reemplazo de resinas suavizador si agotadas. Revisión general del sistema. Calibración de sensores de conductividad y presión'},
+    {freq:'Cada 3–5 años',tarea:'Reemplazo de membranas de OI si tasa de rechazo <95% o caudal <70% del nominal tras limpieza química'}
+  ],
+  aquabplus_hf:[
+    {freq:'Diario',tarea:'Verificar ciclo de hot flush completado. Revisar temperatura del circuito (85°C durante desinfección). Verificar conductividad y presiones'},
+    {freq:'Semanal',tarea:'Inspeccionar unidades de calefacción. Verificar temperatura en puntos de loop. Nivel de sal suavizador'},
+    {freq:'Mensual',tarea:'Cambio de prefiltros. Muestreo microbiológico (frecuencia puede reducirse con hot flush validado). Verificar actuadores de válvulas de temperatura'},
+    {freq:'Semestral',tarea:'Inspección integral del circuito térmico. Análisis de agua. Verificar sellados y juntas tóricas de alta temperatura'},
+    {freq:'Anual',tarea:'Revisión general. Calibración sensores. Inspección de resistencias y termostatos del sistema térmico'}
+  ],
+  aquac:[
+    {freq:'Diario',tarea:'Verificar conductividad de permeado, presiones y alarmas del panel integrado'},
+    {freq:'Semanal',tarea:'Control de nivel de sal. Verificar ciclo de regeneración del suavizador integrado'},
+    {freq:'Mensual',tarea:'Cambio de cartucho de prefiltro. Muestreo microbiológico. Limpieza exterior del gabinete'},
+    {freq:'Trimestral',tarea:'Desinfección química del sistema. Verificar membrana. Inspección de bomba HP'},
+    {freq:'Anual',tarea:'Revisión integral. Análisis de agua completo. Calibración de sensores integrados'}
+  ],
+  lite:[
+    {freq:'Diario',tarea:'Verificar conductividad, caudal y presión de entrada'},
+    {freq:'Semanal',tarea:'Nivel de sal, regenerar suavizador, inspección visual de fugas'},
+    {freq:'Mensual',tarea:'Cambio de prefiltros. Muestreo de agua. Desinfección química'},
+    {freq:'Anual',tarea:'Revisión de membrana. Análisis de agua completo. Inspección de bomba'}
+  ]
+};
+
+var plantaFallas = [
+  {titulo:'Alta conductividad del permeado (>5 µS/cm)',causas:['Membrana de OI saturada o rota','Bypass de agua cruda por falla de válvula','Sensor de conductividad descalibrado','Tasa de recuperación demasiado alta'],soluciones:['Verificar conductividad con conductímetro externo para descartar sensor','Medir conductividad en entrada y salida de cada membrana por separado','Si conductividad alta desde inicio: verificar válvulas de bypass','Si es progresivo: limpiar membrana con ácido cítrico 1% (limpieza química CIP)','Si no mejora tras limpieza: reemplazar membrana']},
+  {titulo:'Bajo caudal de permeado (<70% del nominal)',causas:['Membranas incrustadas (calcio, sulfatos)','Filtros de prefiltro saturados','Bomba HP desgastada','Temperatura del agua muy baja (<15°C)'],soluciones:['Verificar presión diferencial en prefiltros: >0.5 bar = cambiar cartuchos','Medir presión de salida de bomba HP (debe ser 8–16 bar)','Limpieza alcalina de membrana (NaOH 0.1% a pH 11) para biofilm','Limpieza ácida (ácido cítrico 1%) para incrustaciones minerales','Si flujo no recupera: reemplazar membrana']},
+  {titulo:'Alarma presión baja de entrada',causas:['Presión de red insuficiente (<1.5 bar)','Filtro de sedimentos saturado','Válvula de entrada cerrada o con fuga','Bomba booster sin funcionar'],soluciones:['Medir presión de red en punto de entrada con manómetro','Verificar válvula de entrada completamente abierta','Cambiar prefiltros si presión diferencial alta','Si presión de red OK: revisar bomba booster (si tiene)']},
+  {titulo:'Alarma de cloro detectado (post-carbón)',causas:['Lecho de carbón activado agotado o saturado','Tiempo de contacto insuficiente','Pico de cloro en red (>1 ppm)'],soluciones:['DETENER INMEDIATAMENTE el tratamiento si cloro llega a las máquinas','Medir cloro libre en salida de carbón con colorímetro','Si cloro >0.1 ppm: cloro pasa → activar protocolo de emergencia','Purgar el lecho de carbón por al menos 30 min','Si el problema persiste: reemplazar lecho de carbón','Instalar doble protección con segundo lecho o filtro de membrana de carbón']},
+  {titulo:'Contaminación microbiológica elevada',causas:['Estancamiento en el loop de distribución','Desinfección insuficiente o no realizada','Temperatura del loop favorable a bacterias (20–37°C)','Válvulas de retención defectuosas'],soluciones:['Realizar desinfección química de emergencia (H2O2 3% o hipoclorito 50 ppm durante 1h)','Enjuagar exhaustivamente hasta nivel 0 de desinfectante antes de conectar máquinas','Revisar circulación del loop (velocidad >0.5 m/s)','Muestrear agua de todas las tomas del loop tras desinfección','Investigar fuente: puede ser válvula de retención rota que permite contaminación retrógrada']},
+  {titulo:'Fuga de agua (exterior o interna)',causas:['Conexiones flojas tras mantenimiento','O-rings deteriorados','Membrana con defecto de sellado en carcasa','Válvula solenoide con fuga interna'],soluciones:['Identificar origen con papel absorbente en cada conexión','Torque de conexiones: seguir torque de fábrica (no apretar en exceso)','Si fuga por carcasa de membrana: verificar O-rings de los extremos','Desconectar el sistema y presurizarlo manualmente para localizar la fuga']},
+  {titulo:'Alarma de presión del loop baja',causas:['Fuga en el loop','Bomba de circulación del loop detenida','Máquinas tomando más agua de la que produce el sistema'],soluciones:['Verificar que la bomba de circulación del loop esté activa','Contar cuántas máquinas están conectadas vs. caudal disponible','Buscar fugas visibles en toda la línea del loop','Verificar válvulas de suministro a cada puesto']}
+];
+
+function setPlantaTab(tab){
+  plantaTab = tab;
+  document.querySelectorAll('.planta-tab').forEach(b=>b.classList.remove('active'));
+  var tabs = document.querySelectorAll('.planta-tab');
+  var idx = ['circuito','parametros','mantenimiento','fallas'].indexOf(tab);
+  if(tabs[idx]) tabs[idx].classList.add('active');
+  renderPlantaContent();
+}
+
+function renderPlanta(){
+  renderPlantaContent();
+}
+
+function renderPlantaContent(){
+  var modelo = document.getElementById('plantaModelo') ? document.getElementById('plantaModelo').value : 'aquabplus';
+  var info = plantaData[modelo] || plantaData.aquabplus;
+  var el = document.getElementById('plantaContent');
+  if(!el) return;
+  var html = '';
+
+  // Info header
+  var isApema = modelo.startsWith('apema');
+  html += '<div style="background:var(--hover);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:13px">';
+  if(isApema) html += '<span style="background:#1565C0;color:#fff;border-radius:4px;padding:2px 7px;font-size:11px;font-weight:700;margin-right:6px">🇦🇷 FABRICACIÓN NACIONAL</span><br>';
+  html += '<strong>'+info.nombre+'</strong> — '+info.desc+'<br>';
+  html += '<span style="color:var(--accent)">⚡ Etapas: '+info.etapas+' | 💧 Caudal: '+info.caudal+' | 🧪 Desinfección: '+info.desinfeccion+'</span>';
+  if(info.modelos) html += '<br><span style="font-size:12px">📐 Modelos: '+info.modelos+'</span>';
+  if(info.reactivos) html += '<br><span style="font-size:12px;color:#2e7d32">🧪 Reactivos propios: '+info.reactivos+'</span>';
+  if(info.contacto) html += '<br><span style="font-size:12px;color:#888">📞 '+info.contacto+'</span>';
+  html += '</div>';
+
+  if(plantaTab === 'circuito'){
+    html += '<div style="font-size:13px;font-weight:700;margin-bottom:8px;color:var(--accent)">Flujo de tratamiento del agua (de entrada a salida):</div>';
+    plantaCircuito.forEach(function(step, i){
+      html += '<div class="planta-circuit-step">';
+      html += '<div class="step-icon">'+step.icon+'</div>';
+      html += '<div><strong style="font-size:13px">'+(i+1)+'. '+step.title+'</strong>';
+      html += '<div style="font-size:12px;margin-top:3px;color:var(--text-secondary)">'+step.desc+'</div></div>';
+      html += '</div>';
+    });
+  }
+  else if(plantaTab === 'parametros'){
+    html += '<div style="font-size:13px;font-weight:700;margin-bottom:8px;color:var(--accent)">Parámetros de calidad — AAMI / ISO 13959:</div>';
+    html += '<table class="planta-param-table"><thead><tr><th>Parámetro</th><th>Límite</th><th>Nota</th></tr></thead><tbody>';
+    plantaParametros.forEach(function(p){
+      html += '<tr><td><strong>'+p.param+'</strong><br><span style="font-size:11px;color:#888">'+p.norma+'</span></td>';
+      html += '<td style="font-weight:700;color:var(--accent)">'+p.limite+'</td>';
+      html += '<td style="font-size:12px">'+p.nota+'</td></tr>';
+    });
+    html += '</tbody></table>';
+    html += '<div style="background:#fff3cd;border-radius:8px;padding:10px;margin-top:10px;font-size:13px;color:#856404">';
+    html += '⚠️ <strong>Registro obligatorio:</strong> Anotar todos los valores a diario en el libro de control de la planta. En caso de auditoría o incidente con un paciente, estos registros son fundamentales.';
+    html += '</div>';
+  }
+  else if(plantaTab === 'mantenimiento'){
+    var tasks = plantaMantenimiento[modelo] || plantaMantenimiento.aquabplus;
+    html += '<div style="font-size:13px;font-weight:700;margin-bottom:8px;color:var(--accent)">Plan de mantenimiento preventivo:</div>';
+    tasks.forEach(function(t){
+      html += '<div class="planta-maint-row">';
+      html += '<div class="freq">'+t.freq+'</div>';
+      html += '<div style="grid-column:span 2;font-size:13px">'+t.tarea+'</div>';
+      html += '</div>';
+    });
+    html += '<div style="background:#e8f5e9;border-radius:8px;padding:10px;margin-top:12px;font-size:13px;color:#2e7d32">';
+    html += '💡 <strong>Tip:</strong> Llevar un cuaderno de planta con fecha, lectura de conductividad, presiones y quien hizo el mantenimiento. Eso extiende la vida útil de membranas y evita sorpresas.';
+    html += '</div>';
+    if(isApema){
+      html += '<div style="background:#e3f2fd;border-radius:8px;padding:10px;margin-top:8px;font-size:13px;color:#1565C0">';
+      html += '🇦🇷 <strong>Reactivos Apema disponibles en Argentina:</strong><br>';
+      html += '<b>RC50</b> — Cloro libre (hasta 0.1 ppm, 50 tests) | ';
+      html += '<b>RD1</b> — Dureza del agua | ';
+      html += '<b>R420</b> — Ácido peracético residual (0.1–1000 ppm) | ';
+      html += '<b>RFO1</b> — Formaldehído residual (1–15 ppm) | ';
+      html += '<b>RBS1</b> — Metabisulfito de sodio | ';
+      html += '<b>KPH1</b> — pH del dializante.<br>';
+      html += '<span style="font-size:12px">Contacto: (011) 4207-0854 | apema.com.ar/reactivos.htm</span>';
+      html += '</div>';
+    }
+  }
+  else if(plantaTab === 'fallas'){
+    html += '<div style="font-size:13px;font-weight:700;margin-bottom:8px;color:var(--accent)">Fallas comunes y diagnóstico:</div>';
+    plantaFallas.forEach(function(f){
+      html += '<div class="planta-fault-card">';
+      html += '<h4>⚠️ '+f.titulo+'</h4>';
+      html += '<p style="color:var(--text-secondary);font-weight:600;font-size:12px">Causas posibles:</p>';
+      html += '<ul style="margin:4px 0 8px 16px;font-size:13px">';
+      f.causas.forEach(function(c){ html += '<li>'+c+'</li>'; });
+      html += '</ul>';
+      html += '<p style="color:#2e7d32;font-weight:600;font-size:12px">Diagnóstico / Solución:</p>';
+      html += '<ol style="margin:4px 0 0 16px;font-size:13px">';
+      f.soluciones.forEach(function(s){ html += '<li>'+s+'</li>'; });
+      html += '</ol></div>';
+    });
+  }
+
+  el.innerHTML = html;
+}
+
 </script>
 
 </body>
