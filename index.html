@@ -1113,6 +1113,8 @@ async function sendMsg() {
       html=`<span style="color:var(--err)">⚠ <strong>Modelo deprecado.</strong> Actualizá la app.</span>`;
     else if(msg.includes('fetch')||msg.includes('Failed to fetch')||msg==='NetworkError when attempting to fetch resource.')
       html=`<span style="color:var(--err)">⚠ <strong>Error de red.</strong> Revisá tu conexión a internet.</span>`;
+    else if(msg.includes('429')||msg.toLowerCase().includes('quota')||msg.toLowerCase().includes('resource_exhausted'))
+      html=`<span style="color:var(--err)">⚠ <strong>Límite gratuito de la IA alcanzado por ahora.</strong> Esperá un minuto y reintentá, o cambiá a Groq/Claude arriba.</span>`;
     typing.innerHTML=html; history.pop();
   }
   document.getElementById('msgs').scrollTop=99999;
@@ -1128,7 +1130,7 @@ async function callClaude() {
 async function callGemini() {
   const key=localStorage.getItem('fredx_gemini_key')||'';
   if(!key) throw new Error('Configurá la API key de Gemini en ⚙️ · Es gratis en aistudio.google.com/apikey');
-  const MODELS=['gemini-2.5-flash','gemini-2.5-flash-preview-05-20','gemini-2.0-flash','gemini-1.5-flash','gemini-1.5-flash-latest'];
+  const MODELS=['gemini-flash-latest','gemini-2.5-flash','gemini-2.5-flash-lite'];
   const body=JSON.stringify({system_instruction:{parts:[{text:SYSTEM}]},contents:history.map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]}))});
   let lastErr='';
   for(const model of MODELS){
